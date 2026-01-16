@@ -1,0 +1,1033 @@
+import React, { useState, useEffect } from 'react';
+
+// ========== SCENARIO DATA ==========
+
+const elementaryScenarios = [
+  {
+    id: 'e1', title: "The Rushed Morning", timeOfDay: "🌅 Morning at Home", timeOrder: 1,
+    situation: "You woke up late and now you're rushing to get ready. Your mom says you don't have time for your favorite cereal—you have to eat something quick.",
+    choices: [
+      { text: "Say 'okay' and grab a banana to eat on the way", points: 2, skill: "Flexibility", consequence: "You make it to school on time with food in your belly. Mom thanks you for being so cooperative!", emoji: "💚" },
+      { text: "Feel disappointed but grab a granola bar without complaining", points: 1, skill: "Acceptance", consequence: "You get to school okay. Not your favorite breakfast, but you handled it well.", emoji: "💙" },
+      { text: "Whine and say 'But I ALWAYS have my cereal!'", points: -1, skill: "Inflexibility", consequence: "Mom gets more stressed and now everyone is frustrated. You still don't get the cereal.", emoji: "🟠" },
+      { text: "Throw yourself on the couch and refuse to move", points: -2, skill: "Tantrum", consequence: "Now you're really late AND hungry. Mom is upset and you start the day feeling terrible.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'e2', title: "The Missing Shoe", timeOfDay: "🌅 Morning at Home", timeOrder: 1,
+    situation: "You can only find one of your shoes and the bus is coming in 5 minutes. You're starting to panic!",
+    choices: [
+      { text: "Take a deep breath and think about where you last had them", points: 2, skill: "Problem-Solving", consequence: "You remember you kicked them off by the couch! You find your shoe and make it to the bus.", emoji: "💚" },
+      { text: "Ask a grown-up to help you look", points: 1, skill: "Help-Seeking", consequence: "Dad helps you look and finds it under your bed. You make it to the bus!", emoji: "💙" },
+      { text: "Start crying and say you can't go to school", points: -1, skill: "Overwhelm", consequence: "The crying uses up time. Someone finds the shoe but now you feel embarrassed.", emoji: "🟠" },
+      { text: "Get mad and throw the shoe you DID find", points: -2, skill: "Aggression", consequence: "Now you might have TWO missing shoes! Plus you're in trouble for throwing things.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'e3', title: "The Bus Seat", timeOfDay: "🚌 Bus Ride", timeOrder: 2,
+    situation: "You get on the bus and see that someone is sitting in the seat where you usually sit with your friend.",
+    choices: [
+      { text: "Find another seat and wave to your friend—you can talk at school", points: 2, skill: "Flexible Thinking", consequence: "You sit somewhere new and actually make a new friend! Your regular friend waves back.", emoji: "💚" },
+      { text: "Politely ask if you can squeeze in", points: 1, skill: "Assertiveness", consequence: "Everyone scoots over to make room. You get to sit with your friend!", emoji: "💙" },
+      { text: "Stand in the aisle and stare at them until they move", points: -1, skill: "Passive Confrontation", consequence: "The bus driver tells you to sit down. You feel embarrassed.", emoji: "🟠" },
+      { text: "Tell them loudly 'That's MY seat! Move!'", points: -2, skill: "Aggression", consequence: "The other kid feels bad and the bus driver gives you a warning.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'e4', title: "The Hard Math Problem", timeOfDay: "📚 1st Period - Math", timeOrder: 3,
+    situation: "Your teacher puts a math problem on the board and you have no idea how to solve it. Other kids are raising their hands.",
+    choices: [
+      { text: "Raise your hand and ask the teacher to explain it differently", points: 2, skill: "Help-Seeking", consequence: "The teacher explains it again and suddenly it makes sense! Other kids thank you too.", emoji: "💚" },
+      { text: "Look at the example problems in your book for hints", points: 1, skill: "Independence", consequence: "The book helps! You get part of it right and feel proud for trying.", emoji: "💙" },
+      { text: "Put your head down and hope the teacher doesn't call on you", points: -1, skill: "Avoidance", consequence: "You don't learn how to do it. Hiding didn't help.", emoji: "🟠" },
+      { text: "Say loudly 'This is stupid! Math is dumb!'", points: -2, skill: "Outburst", consequence: "The teacher talks to you about being respectful. Now you're embarrassed AND confused.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'e5', title: "The Group Project", timeOfDay: "📖 2nd Period - Reading", timeOrder: 4,
+    situation: "Your teacher puts you in a group with kids you don't usually play with. One of them wants to be the boss.",
+    choices: [
+      { text: "Share your ideas calmly and ask what others think too", points: 2, skill: "Collaboration", consequence: "The group starts working together! The bossy kid even likes your idea.", emoji: "💚" },
+      { text: "Go along with their ideas and do your part", points: 1, skill: "Cooperation", consequence: "The project gets done. Maybe next time you can share more ideas.", emoji: "💙" },
+      { text: "Cross your arms and refuse to participate", points: -1, skill: "Withdrawal", consequence: "Your group struggles and you feel left out.", emoji: "🟠" },
+      { text: "Say 'You're not the boss of me!' and argue about everything", points: -2, skill: "Defiance", consequence: "Now there's fighting. No one is having fun and the project isn't done.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'e6', title: "The Recess Game", timeOfDay: "⚽ Recess", timeOrder: 5,
+    situation: "You want to play soccer but the teams are already picked and both sides say they have enough players.",
+    choices: [
+      { text: "Ask if you can be a sub and go in when someone needs a break", points: 2, skill: "Creative Problem-Solving", consequence: "They say yes! You get to play and everyone thinks it's fair.", emoji: "💚" },
+      { text: "Watch for now and ask to play in the next game", points: 1, skill: "Patience", consequence: "When the next game starts, they let you play from the beginning.", emoji: "💙" },
+      { text: "Walk away sadly and sit alone on the bench", points: -1, skill: "Withdrawal", consequence: "You spend recess feeling lonely. You could have found something else fun!", emoji: "🟠" },
+      { text: "Kick the ball away and say 'Your game is dumb anyway!'", points: -2, skill: "Aggression", consequence: "Now the other kids are mad. They won't want you to play next time either.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'e7', title: "The Spilled Snack", timeOfDay: "🍎 Snack Time", timeOrder: 5,
+    situation: "You're opening your snack and it spills all over the floor. Some kids start laughing.",
+    choices: [
+      { text: "Laugh a little too and say 'Oops! Snack escape!' while you clean up", points: 2, skill: "Humor", consequence: "Other kids laugh WITH you! Someone helps clean up. It becomes a funny moment.", emoji: "💚" },
+      { text: "Clean it up quietly and don't worry about the laughing", points: 1, skill: "Self-Regulation", consequence: "You handle it calmly. The laughing stops quickly.", emoji: "💙" },
+      { text: "Start crying because you're embarrassed", points: -1, skill: "Overwhelm", consequence: "Now you're embarrassed AND crying. You feel worse than you needed to.", emoji: "🟠" },
+      { text: "Yell 'Stop laughing!' and knock someone else's snack over", points: -2, skill: "Retaliation", consequence: "Now you're in trouble. Two messes to clean and a trip to see the teacher.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'e8', title: "The Art Project", timeOfDay: "🎨 3rd Period - Art", timeOrder: 6,
+    situation: "You're working hard on a drawing but it doesn't look like what you imagined. The kid next to you has an amazing drawing.",
+    choices: [
+      { text: "Tell yourself 'I'm still learning' and ask them for tips", points: 2, skill: "Growth Mindset", consequence: "They share a cool technique! Your drawing gets better and you made a new art friend.", emoji: "💚" },
+      { text: "Keep trying your best and focus on your own paper", points: 1, skill: "Persistence", consequence: "You finish your drawing. It's not perfect but it's YOURS.", emoji: "💙" },
+      { text: "Crumple up your paper and say 'I'm bad at art'", points: -1, skill: "Giving Up", consequence: "Now you have to start over. You're not bad—you just need practice!", emoji: "🟠" },
+      { text: "Say 'Your drawing is weird' to make yourself feel better", points: -2, skill: "Putting Others Down", consequence: "The other kid feels hurt. Being mean didn't make your drawing any better.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'e9', title: "The Lunch Table", timeOfDay: "🍕 Lunch", timeOrder: 7,
+    situation: "You walk into the cafeteria and your usual spot is taken. Your friends are at a full table.",
+    choices: [
+      { text: "Ask if you can squeeze in, or find a seat nearby", points: 2, skill: "Social Problem-Solving", consequence: "Everyone scoots over! Or you sit nearby and still chat. Lunch is fun!", emoji: "💚" },
+      { text: "Find a different table and maybe make new friends", points: 1, skill: "Flexibility", consequence: "You meet some new kids who are actually pretty cool!", emoji: "💙" },
+      { text: "Stand holding your tray looking sad until someone notices", points: -1, skill: "Helplessness", consequence: "You waste lunch time standing around feeling awkward.", emoji: "🟠" },
+      { text: "Push into the table and say 'Move! This is where I sit!'", points: -2, skill: "Aggression", consequence: "You cause a scene and a lunch monitor comes over.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'e10', title: "The Science Mistake", timeOfDay: "🔬 4th Period - Science", timeOrder: 8,
+    situation: "During an experiment, you accidentally break a piece of equipment. No one saw it happen.",
+    choices: [
+      { text: "Tell the teacher what happened and say you're sorry", points: 2, skill: "Honesty", consequence: "The teacher thanks you for being honest. Accidents happen and they're not mad!", emoji: "💚" },
+      { text: "Raise your hand and ask for help cleaning it up", points: 1, skill: "Responsibility", consequence: "The teacher helps you clean up and isn't upset.", emoji: "💙" },
+      { text: "Hide it and hope nobody notices", points: -1, skill: "Avoidance", consequence: "You feel worried someone will find out. The secret feels heavy.", emoji: "🟠" },
+      { text: "Quickly move away and pretend it was already broken", points: -2, skill: "Dishonesty", consequence: "Later, the teacher asks who broke it. Now you have to lie or admit you hid it.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'e11', title: "The PE Challenge", timeOfDay: "🏃 5th Period - PE", timeOrder: 9,
+    situation: "Your class is doing the mile run. You're tired after the first lap and there's still more to go.",
+    choices: [
+      { text: "Tell yourself 'I can do this' and keep going", points: 2, skill: "Positive Self-Talk", consequence: "You finish! It was hard but you feel SO proud of yourself.", emoji: "💚" },
+      { text: "Walk when you need to but keep moving forward", points: 1, skill: "Self-Pacing", consequence: "You finish by mixing walking and running. You listened to your body!", emoji: "💙" },
+      { text: "Stop and say your stomach hurts so you can sit out", points: -1, skill: "Avoidance", consequence: "You sit out but feel bad watching others finish.", emoji: "🟠" },
+      { text: "Complain loudly 'Running is stupid!'", points: -2, skill: "Negativity", consequence: "The PE teacher talks to you about attitude.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'e12', title: "The Hurt Feelings", timeOfDay: "🏫 End of Day", timeOrder: 10,
+    situation: "Your best friend played with someone else at recess and didn't include you. School is ending and you feel hurt.",
+    choices: [
+      { text: "Tell your friend 'I felt left out. Can we play together tomorrow?'", points: 2, skill: "Expressing Feelings", consequence: "Your friend says sorry and promises to play with you tomorrow! You feel better.", emoji: "💚" },
+      { text: "Talk to a grown-up about how you're feeling", points: 1, skill: "Seeking Support", consequence: "They help you feel better and give advice for tomorrow.", emoji: "💙" },
+      { text: "Ignore your friend when they say bye", points: -1, skill: "Passive-Aggression", consequence: "Your friend is confused. They don't know why you're upset.", emoji: "🟠" },
+      { text: "Tell them 'You're not my friend anymore!'", points: -2, skill: "Reactive Rejection", consequence: "You might lose a good friendship over one bad day.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'e13', title: "The Homework Surprise", timeOfDay: "🏠 After School", timeOrder: 11,
+    situation: "You get home and remember you have homework. You really wanted to play outside.",
+    choices: [
+      { text: "Do homework first, then play—you won't have to worry!", points: 2, skill: "Responsibility", consequence: "You finish and playing after is SO fun because you're not worried!", emoji: "💚" },
+      { text: "Ask if you can play for 20 minutes then do homework", points: 1, skill: "Negotiation", consequence: "Your grown-up agrees. You keep your promise!", emoji: "💙" },
+      { text: "Say you don't have homework and hide it", points: -1, skill: "Deception", consequence: "You might forget and get in trouble at school tomorrow.", emoji: "🟠" },
+      { text: "Have a meltdown: 'I don't WANT to do homework!'", points: -2, skill: "Tantrum", consequence: "You still have to do it, but now you're upset AND in trouble.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'e14', title: "The Sibling Problem", timeOfDay: "🏠 After School", timeOrder: 11,
+    situation: "Your brother/sister takes the TV remote and changes what you were watching without asking.",
+    choices: [
+      { text: "Say 'Hey, I was watching that. Can we take turns?'", points: 2, skill: "Assertiveness", consequence: "You work out a deal to share. Fair!", emoji: "💚" },
+      { text: "Get a parent to help work it out", points: 1, skill: "Adult Help", consequence: "A grown-up helps make a fair plan.", emoji: "💙" },
+      { text: "Try to grab the remote back", points: -1, skill: "Physical Response", consequence: "Now you're fighting and someone might get hurt.", emoji: "🟠" },
+      { text: "Scream 'I HATE YOU!' and hit them", points: -2, skill: "Aggression", consequence: "You're in big trouble. Hitting is never okay.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'e15', title: "The Bedtime Worry", timeOfDay: "🌙 Evening", timeOrder: 12,
+    situation: "You're in bed but can't sleep because you're worried about a test tomorrow.",
+    choices: [
+      { text: "Take deep breaths and tell yourself you'll do your best", points: 2, skill: "Self-Calming", consequence: "Your body relaxes and you fall asleep. You feel better in the morning!", emoji: "💚" },
+      { text: "Tell a parent you're worried so they can help", points: 1, skill: "Seeking Comfort", consequence: "They reassure you and maybe help you review quickly. You feel calmer.", emoji: "💙" },
+      { text: "Keep worrying and can't fall asleep for hours", points: -1, skill: "Rumination", consequence: "You're tired the next day, which makes the test harder.", emoji: "🟠" },
+      { text: "Get out of bed and refuse to go to sleep at all", points: -2, skill: "Defiance", consequence: "You're exhausted tomorrow and in trouble for not sleeping.", emoji: "🔴" }
+    ]
+  }
+];
+
+const middleSchoolScenarios = [
+  {
+    id: 'm1', title: "The Social Media Morning", timeOfDay: "🌅 Morning at Home", timeOrder: 1,
+    situation: "You check your phone and see your friends hung out last night without you. They posted pictures and didn't invite you.",
+    choices: [
+      { text: "Text a friend: 'Looked fun! What did you guys do?'", points: 2, skill: "Direct Communication", consequence: "They explain it was last minute. They promise to text you next time!", emoji: "💚" },
+      { text: "Put the phone down and focus on getting ready", points: 1, skill: "Emotional Regulation", consequence: "You don't start your day upset. At school, you ask casually and it wasn't personal.", emoji: "💙" },
+      { text: "Post something passive-aggressive on your story", points: -1, skill: "Passive-Aggression", consequence: "Your friends see it and feel confused. Now there's actual drama.", emoji: "🟠" },
+      { text: "Send angry texts calling them fake friends", points: -2, skill: "Reactive Aggression", consequence: "A small thing that could've been explained turns into a real conflict.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'm2', title: "The Outfit Crisis", timeOfDay: "🌅 Morning at Home", timeOrder: 1,
+    situation: "Your favorite shirt is in the laundry. Nothing else feels right and you're running low on time.",
+    choices: [
+      { text: "Pick something else—clothes don't define you", points: 2, skill: "Flexibility", consequence: "You head out on time. Nobody even notices. You were overthinking it.", emoji: "💚" },
+      { text: "Ask if someone can throw it in the dryer quickly", points: 1, skill: "Problem-Solving", consequence: "It's a bit damp but wearable. You made it work!", emoji: "💙" },
+      { text: "Spend 20 minutes trying on everything while complaining", points: -1, skill: "Perfectionism", consequence: "You're late and stressed. Your whole morning is ruined.", emoji: "🟠" },
+      { text: "Refuse to go to school because you have 'nothing to wear'", points: -2, skill: "Avoidance", consequence: "Missing school over clothes creates bigger problems.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'm3', title: "The Locker Jam", timeOfDay: "🚪 Arrival", timeOrder: 2,
+    situation: "Your locker is jammed and won't open. The warning bell just rang and you need your stuff.",
+    choices: [
+      { text: "Ask a nearby teacher for help", points: 2, skill: "Help-Seeking", consequence: "An adult helps and gives you a pass. Smart move!", emoji: "💚" },
+      { text: "Go to class and explain—get your stuff later", points: 1, skill: "Flexibility", consequence: "Your teacher understands. No big deal!", emoji: "💙" },
+      { text: "Keep yanking on it harder while panicking", points: -1, skill: "Frustration", consequence: "You're late, sweaty, and stressed. Still stuck.", emoji: "🟠" },
+      { text: "Kick the locker and yell", points: -2, skill: "Outburst", consequence: "A teacher sees and you get written up. Still stuck AND in trouble.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'm4', title: "The Pop Quiz", timeOfDay: "📚 1st Period", timeOrder: 3,
+    situation: "Surprise quiz on reading you didn't finish. Your heart sinks.",
+    choices: [
+      { text: "Do your best and commit to doing the reading tonight", points: 2, skill: "Accountability", consequence: "You answer what you can. You learn and do better next time.", emoji: "💚" },
+      { text: "Try to remember what was discussed in class", points: 1, skill: "Resourcefulness", consequence: "You piece together enough. It's not great but honest.", emoji: "💙" },
+      { text: "Try to sneak looks at your neighbor's paper", points: -1, skill: "Cheating", consequence: "You're stressed the whole time about getting caught.", emoji: "🟠" },
+      { text: "Complain loudly that pop quizzes are unfair", points: -2, skill: "Defiance", consequence: "The teacher gives you a zero. Your protest changed nothing.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'm5', title: "The Partner Assignment", timeOfDay: "📖 2nd Period", timeOrder: 4,
+    situation: "You get paired with someone quiet and different from your usual friends.",
+    choices: [
+      { text: "Introduce yourself and ask what they're good at", points: 2, skill: "Inclusive Leadership", consequence: "They have great ideas! You work really well together.", emoji: "💚" },
+      { text: "Be friendly and do your fair share", points: 1, skill: "Cooperation", consequence: "Fine partnership. You get the work done well.", emoji: "💙" },
+      { text: "Do most of the work assuming they won't help", points: -1, skill: "Prejudgment", consequence: "You do way more work. They had good ideas you never heard.", emoji: "🟠" },
+      { text: "Ask the teacher loudly if you can switch partners", points: -2, skill: "Public Rejection", consequence: "Your partner hears and feels terrible. Teacher says no.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'm6', title: "The Gossip Circle", timeOfDay: "🥤 Nutrition Break", timeOrder: 5,
+    situation: "Your friends are talking badly about another kid. They ask if you heard about what happened.",
+    choices: [
+      { text: "'I don't want to talk about them when they're not here'", points: 2, skill: "Moral Courage", consequence: "Awkward for a second, then everyone moves on. You feel good.", emoji: "💚" },
+      { text: "Don't add anything negative but stay quiet", points: 1, skill: "Non-Participation", consequence: "You don't make it worse. You wish you'd said something.", emoji: "💙" },
+      { text: "Add your own story to fit in", points: -1, skill: "Conformity", consequence: "You feel gross afterward. You said things you didn't mean.", emoji: "🟠" },
+      { text: "Jump in with something really mean to make everyone laugh", points: -2, skill: "Cruelty", consequence: "Word gets back to the other kid. You've really hurt someone.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'm7', title: "The Wrong Answer", timeOfDay: "🌍 3rd Period", timeOrder: 6,
+    situation: "You confidently answer a question and the teacher says you're wrong. Kids snicker.",
+    choices: [
+      { text: "'Oh, what's the right answer? I want to understand.'", points: 2, skill: "Growth Mindset", consequence: "You actually learn something. The snickers stop.", emoji: "💚" },
+      { text: "Shrug it off—everyone gets stuff wrong sometimes", points: 1, skill: "Self-Compassion", consequence: "You move on. By next class, nobody remembers.", emoji: "💙" },
+      { text: "Stop participating to avoid being wrong again", points: -1, skill: "Withdrawal", consequence: "You miss chances to learn. Playing it safe means missing out.", emoji: "🟠" },
+      { text: "Mutter 'This class is dumb' and put your head down", points: -2, skill: "Defensive Shutdown", consequence: "The teacher notices. Your embarrassment became disrespect.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'm8', title: "The Cafeteria Choice", timeOfDay: "🍕 Lunch", timeOrder: 7,
+    situation: "You see a kid from your class sitting alone. Your table is full of conversation.",
+    choices: [
+      { text: "Invite them to join your table or sit with them", points: 2, skill: "Active Inclusion", consequence: "They're grateful. They're actually interesting! Friends think it was cool.", emoji: "💚" },
+      { text: "Wave and say hi when you walk by", points: 1, skill: "Acknowledgment", consequence: "A small gesture but it matters. They smile back.", emoji: "💙" },
+      { text: "Feel bad but sit with friends without acknowledging them", points: -1, skill: "Bystander", consequence: "You feel guilty. You know you could have done something kind.", emoji: "🟠" },
+      { text: "Make a comment to friends about why they're alone", points: -2, skill: "Cruelty", consequence: "You've made someone's bad day worse.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'm9', title: "The Tryout Results", timeOfDay: "🏐 4th Period", timeOrder: 8,
+    situation: "You didn't make the team. You really wanted this and some friends made it.",
+    choices: [
+      { text: "Congratulate friends and ask coach what to work on", points: 2, skill: "Graceful Acceptance", consequence: "Coach gives helpful feedback. Friends respect how you handled it.", emoji: "💚" },
+      { text: "Take time to be disappointed, then think about what else to try", points: 1, skill: "Processing", consequence: "You're sad but start looking at other activities.", emoji: "💙" },
+      { text: "Tell everyone the tryouts were rigged", points: -1, skill: "Blame", consequence: "It feels better to blame others, but it doesn't help you improve.", emoji: "🟠" },
+      { text: "Give friends the cold shoulder because they made it", points: -2, skill: "Jealousy", consequence: "You lose your team spot AND strain friendships.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'm10', title: "The Group Text Drama", timeOfDay: "📱 Between Classes", timeOrder: 9,
+    situation: "Heated argument in the group chat. People @ you asking whose side you're on.",
+    choices: [
+      { text: "Put phone away and respond later when things calm down", points: 2, skill: "Digital Boundaries", consequence: "By end of day, drama died down. You didn't add fuel.", emoji: "💚" },
+      { text: "'Can we not do this in chat? Talk in person.'", points: 1, skill: "Peacemaking", consequence: "Some agree, some ignore. You tried to de-escalate.", emoji: "💙" },
+      { text: "Pick a side and start defending them", points: -1, skill: "Drama Participation", consequence: "Now you're part of the fight.", emoji: "🟠" },
+      { text: "Screenshot and send to people not in the chat", points: -2, skill: "Drama Spreading", consequence: "You spread private conflict. Your trustworthiness takes a hit.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'm11', title: "The Overwhelm", timeOfDay: "📝 5th Period", timeOrder: 10,
+    situation: "Teacher explains a big project due next week. Combined with everything else, you feel overwhelmed.",
+    choices: [
+      { text: "Write everything down and plan to break it into pieces", points: 2, skill: "Organization", consequence: "Having it written makes it feel manageable.", emoji: "💚" },
+      { text: "Take deep breaths and tell yourself you'll figure it out", points: 1, skill: "Coping", consequence: "You calm your anxiety. Work's still there but you're not panicking.", emoji: "💙" },
+      { text: "Zone out because it's too much to handle", points: -1, skill: "Dissociation", consequence: "You miss important details. Now stressed AND confused.", emoji: "🟠" },
+      { text: "Blurt out 'Are you kidding?! We have SO much work!'", points: -2, skill: "Outburst", consequence: "Teacher isn't impressed. Stress is valid, delivery got you in trouble.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'm12', title: "The Bus Bullying", timeOfDay: "🚌 End of Day", timeOrder: 11,
+    situation: "On the bus, kids in back are making fun of a younger student. Others are laughing.",
+    choices: [
+      { text: "Go sit near them or invite them to sit with you", points: 2, skill: "Active Protection", consequence: "They look relieved. Bullies lose audience. You did the right thing.", emoji: "💚" },
+      { text: "Tell the bus driver what's happening", points: 1, skill: "Appropriate Reporting", consequence: "Bus driver handles it. You helped without confrontation.", emoji: "💙" },
+      { text: "Turn up your music and pretend you don't notice", points: -1, skill: "Bystander", consequence: "They're still being bullied. You could have helped.", emoji: "🟠" },
+      { text: "Laugh along even though you know it's wrong", points: -2, skill: "Joining In", consequence: "You're now part of the problem.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'm13', title: "The Screen Time Battle", timeOfDay: "🏠 After School", timeOrder: 12,
+    situation: "You've been on your phone a while. Parent says put it down for homework, but you're in the middle of something.",
+    choices: [
+      { text: "'Can I have 5 more minutes to finish this, then I'll start?'", points: 2, skill: "Negotiation", consequence: "Parent agrees. You finish up and do homework. Everyone's happy.", emoji: "💚" },
+      { text: "Sigh but put it down—they're probably right", points: 1, skill: "Compliance", consequence: "Annoying but you get homework done. Evening goes smoothly.", emoji: "💙" },
+      { text: "Say 'In a minute' and keep scrolling", points: -1, skill: "Dismissive Delay", consequence: "They don't forget. Now they're more frustrated.", emoji: "🟠" },
+      { text: "Yell 'You're always nagging me!' and storm off", points: -2, skill: "Escalation", consequence: "Real conflict. Might lose phone entirely.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'm14', title: "The Friendship Tension", timeOfDay: "📱 Evening", timeOrder: 12,
+    situation: "Friend texts asking if you're mad at them. You're not—just been stressed and distant.",
+    choices: [
+      { text: "Call and explain you've been stressed, not about them", points: 2, skill: "Honest Communication", consequence: "They understand and offer to help. Friendship feels stronger.", emoji: "💚" },
+      { text: "'Not mad! Just busy with school. Hang out this weekend?'", points: 1, skill: "Reassurance", consequence: "They seem relieved. You make plans.", emoji: "💙" },
+      { text: "Text back 'No, why?' and leave it at that", points: -1, skill: "Dismissive Response", consequence: "Short answer doesn't reassure them. Weird energy continues.", emoji: "🟠" },
+      { text: "Don't respond—you don't want to deal with it", points: -2, skill: "Avoidance", consequence: "Not responding makes them think you ARE mad.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'm15', title: "The Bedtime Spiral", timeOfDay: "🌙 Evening", timeOrder: 13,
+    situation: "Trying to sleep but your mind keeps replaying an awkward thing you said today.",
+    choices: [
+      { text: "Remind yourself everyone has awkward moments and tomorrow is new", points: 2, skill: "Self-Compassion", consequence: "The thought fades. Morning comes and nobody remembers.", emoji: "💚" },
+      { text: "Do breathing exercises until your mind settles", points: 1, skill: "Distraction Technique", consequence: "Takes time but you eventually fall asleep.", emoji: "💙" },
+      { text: "Keep replaying it, imagining everyone thinks you're weird", points: -1, skill: "Rumination", consequence: "You barely sleep. You made the moment much bigger than it was.", emoji: "🟠" },
+      { text: "Send an apologetic text at midnight trying to fix it", points: -2, skill: "Impulsive Overcorrection", consequence: "A weird midnight text makes things MORE awkward.", emoji: "🔴" }
+    ]
+  }
+];
+
+const highSchoolScenarios = [
+  {
+    id: 'h1', title: "The Sleep Deficit", timeOfDay: "🌅 Morning", timeOrder: 1,
+    situation: "You stayed up until 2 AM finishing a paper. You're exhausted with a full day ahead.",
+    choices: [
+      { text: "Cold shower, plan to go to bed early tonight", points: 2, skill: "Adaptive Recovery", consequence: "You push through and prioritize sleep tonight. Not sustainable long-term though.", emoji: "💚" },
+      { text: "Grab coffee and accept today will be rough", points: 1, skill: "Acceptance", consequence: "Hard day but you get through it.", emoji: "💙" },
+      { text: "Text a friend to cover for you and skip first period", points: -1, skill: "Avoidance with Deception", consequence: "More sleep but miss content and risk getting caught.", emoji: "🟠" },
+      { text: "Call in sick and miss the whole day", points: -2, skill: "Complete Avoidance", consequence: "Behind on everything now. One rough morning became a day of makeup work.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'h2', title: "The Social Media Comparison", timeOfDay: "🌅 Morning", timeOrder: 1,
+    situation: "Everyone's posting college acceptances, parties, relationships. Your life feels like it doesn't measure up.",
+    choices: [
+      { text: "Remember social media is a highlight reel, then put phone down", points: 2, skill: "Critical Media Literacy", consequence: "You start your day on your own terms.", emoji: "💚" },
+      { text: "Limit yourself to 5 minutes then get ready", points: 1, skill: "Digital Boundaries", consequence: "You set a boundary even if FOMO stings.", emoji: "💙" },
+      { text: "Keep scrolling even though it makes you feel worse", points: -1, skill: "Self-Defeating Behavior", consequence: "Late getting ready and feeling bad about yourself.", emoji: "🟠" },
+      { text: "Post something exaggerated to make your life look better", points: -2, skill: "Performative Inauthenticity", consequence: "Now you're part of the same problem. Feels empty.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'h3', title: "The Parking Lot Incident", timeOfDay: "🚗 Arrival", timeOrder: 2,
+    situation: "Someone takes the parking spot you were clearly waiting for. They wave and walk away.",
+    choices: [
+      { text: "Deep breath, find another spot, let it go", points: 2, skill: "Anger Regulation", consequence: "You find another spot. By first period, you've forgotten about it.", emoji: "💚" },
+      { text: "Feel annoyed but find another spot without engaging", points: 1, skill: "Avoidant Coping", consequence: "You're irritated but didn't escalate.", emoji: "💙" },
+      { text: "Roll down window and yell at them", points: -1, skill: "Verbal Aggression", consequence: "They ignore you. You're worked up over something that didn't change.", emoji: "🟠" },
+      { text: "Block them in with your car to 'teach them a lesson'", points: -2, skill: "Revenge Behavior", consequence: "Could lead to confrontation, damage, or school trouble. Not worth it.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'h4', title: "The Graded Essay", timeOfDay: "📚 1st Period", timeOrder: 3,
+    situation: "Your essay comes back as a C. You worked hard and expected at least a B. Comments all over it.",
+    choices: [
+      { text: "Read comments carefully and ask to meet with teacher", points: 2, skill: "Growth Orientation", consequence: "Teacher impressed by initiative. Next essay improves significantly.", emoji: "💚" },
+      { text: "Accept grade and read comments to learn for next time", points: 1, skill: "Acceptance", consequence: "It stings but you'll use it to do better.", emoji: "💙" },
+      { text: "Skim comments and tell yourself teacher doesn't like your style", points: -1, skill: "Defensive Dismissal", consequence: "Protect ego but miss learning opportunity.", emoji: "🟠" },
+      { text: "Argue with teacher in front of class", points: -2, skill: "Public Confrontation", consequence: "Teacher not swayed. Grade stands and now there's tension.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'h5', title: "The Lab Partner Problem", timeOfDay: "🔬 2nd Period", timeOrder: 4,
+    situation: "Your lab partner hasn't done their share of the joint report. You've reminded them twice.",
+    choices: [
+      { text: "'Hey, I need us to split this fairly. Can we make a plan now?'", points: 2, skill: "Assertive Communication", consequence: "They apologize and you divide work clearly. Boundaries work.", emoji: "💚" },
+      { text: "Email teacher to ask for advice", points: 1, skill: "Appropriate Escalation", consequence: "Teacher appreciates it. They talk to partner and help facilitate.", emoji: "💙" },
+      { text: "Do it yourself and silently resent them", points: -1, skill: "Passive Self-Sacrifice", consequence: "Done but exhausted and angry. Will probably happen again.", emoji: "🟠" },
+      { text: "Tell everyone your partner is lazy", points: -2, skill: "Social Sabotage", consequence: "Word gets back. Damaged partnership and they're less motivated now.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'h6', title: "The Vape Offer", timeOfDay: "☕ Break", timeOrder: 5,
+    situation: "Someone you want to fit in with offers their vape. Others are using it. You've never vaped.",
+    choices: [
+      { text: "'Nah, I'm good' and stay in conversation about something else", points: 2, skill: "Confident Refusal", consequence: "Most people shrug. You stayed true to yourself without making it awkward.", emoji: "💚" },
+      { text: "Make a casual excuse about having a drug test coming up", points: 1, skill: "Face-Saving Refusal", consequence: "Excuse works. Not fully authentic but avoided pressure.", emoji: "💙" },
+      { text: "Take a small hit even though you don't want to", points: -1, skill: "Conformity Against Values", consequence: "You cough and feel weird. Did something you didn't want for approval.", emoji: "🟠" },
+      { text: "Take it and keep using whenever offered", points: -2, skill: "Risky Conformity", consequence: "Started a habit you didn't want. Harder to stop than you thought.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'h7', title: "The Presentation Panic", timeOfDay: "🎤 3rd Period", timeOrder: 6,
+    situation: "You have to present soon. Your heart is racing and hands are shaking.",
+    choices: [
+      { text: "Slow breaths, remember you prepared, focus on content not appearance", points: 2, skill: "Anxiety Management", consequence: "You get through it. Not perfect but done. You're proud for facing fear.", emoji: "💚" },
+      { text: "Volunteer to go first to get it over with", points: 1, skill: "Proactive Coping", consequence: "You stumble a bit but then can relax the rest of class.", emoji: "💙" },
+      { text: "Ask to present tomorrow because you 'don't feel ready'", points: -1, skill: "Delay Tactics", consequence: "Teacher lets you, but anxiety doesn't go away by avoiding.", emoji: "🟠" },
+      { text: "Pretend to be sick and go to the nurse", points: -2, skill: "Complete Avoidance", consequence: "Might have to make up with worse option. Avoidance backfires.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'h8', title: "The Ex Encounter", timeOfDay: "🍕 Lunch", timeOrder: 7,
+    situation: "You see your ex with someone new. They're laughing together. You're not over the breakup.",
+    choices: [
+      { text: "Acknowledge the feeling, sit with friends, focus on your life", points: 2, skill: "Healthy Processing", consequence: "It hurts but you don't act on it. The feeling fades.", emoji: "💚" },
+      { text: "Go eat somewhere else to give yourself space", points: 1, skill: "Strategic Avoidance", consequence: "You give yourself room to process. Self-care.", emoji: "💙" },
+      { text: "Stare at them the whole lunch, analyzing everything", points: -1, skill: "Obsessive Monitoring", consequence: "You torture yourself and don't eat.", emoji: "🟠" },
+      { text: "Walk by and make a loud negative comment", points: -2, skill: "Vindictive Behavior", consequence: "Obvious you're trying to get reaction. Look petty, feel worse.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'h9', title: "The College Conversation", timeOfDay: "📐 4th Period", timeOrder: 8,
+    situation: "Everyone's talking about college plans. You're not sure what you want and feel pressured to have it figured out.",
+    choices: [
+      { text: "'I'm still figuring it out, and I think that's okay'", points: 2, skill: "Authentic Self-Acceptance", consequence: "Others admit they feel the same. Your honesty opens real conversation.", emoji: "💚" },
+      { text: "Listen without committing, say you're 'exploring options'", points: 1, skill: "Neutral Deflection", consequence: "You don't feel pressured to have answers you don't have.", emoji: "💙" },
+      { text: "Make up an impressive plan you haven't actually thought about", points: -1, skill: "Performative Certainty", consequence: "Sound sure but feel like a fraud inside.", emoji: "🟠" },
+      { text: "Get defensive: 'Not everyone needs college!'", points: -2, skill: "Defensive Hostility", consequence: "Shut down people who might have helped or related to you.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'h10', title: "The Academic Honesty Line", timeOfDay: "💻 5th Period", timeOrder: 9,
+    situation: "Classmate offers a copy of last year's test that teacher reuses. 'Everyone does it.'",
+    choices: [
+      { text: "Decline and study on your own—earn your grade honestly", points: 2, skill: "Integrity", consequence: "Might not ace it, but proud of what you know. Integrity intact.", emoji: "💚" },
+      { text: "Look at topics to study, but actually learn the material", points: 1, skill: "Gray Area", consequence: "Ethically murky. You learn content but had unfair advantage.", emoji: "💙" },
+      { text: "Use it to memorize exact answers", points: -1, skill: "Academic Dishonesty", consequence: "Do well but learn nothing. Know it wasn't earned.", emoji: "🟠" },
+      { text: "Share it with others—everyone should have same advantage", points: -2, skill: "Spreading Dishonesty", consequence: "If discovered, multiple people in trouble including you.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'h11', title: "The Mental Health Moment", timeOfDay: "📝 6th Period", timeOrder: 10,
+    situation: "You've been feeling really low lately. Friend notices and asks if you're okay.",
+    choices: [
+      { text: "'Actually, I haven't been feeling great. Can we talk after school?'", points: 2, skill: "Vulnerability", consequence: "Friend listens and helps figure out next steps. You feel less alone.", emoji: "💚" },
+      { text: "'I'm struggling a bit. Might talk to the counselor.'", points: 1, skill: "Self-Advocacy", consequence: "Admitting it is a start. Professional support is a good idea.", emoji: "💙" },
+      { text: "'I'm fine, just tired' and deflect", points: -1, skill: "Minimization", consequence: "Missed chance to open up. Feelings don't go away by not talking.", emoji: "🟠" },
+      { text: "Make a dark joke that worries them but don't explain", points: -2, skill: "Alarming Deflection", consequence: "Friend is scared and doesn't know how to help. More isolated.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'h12', title: "The Work-School Balance", timeOfDay: "🏫 End of Day", timeOrder: 11,
+    situation: "You have work tonight but also a test tomorrow you haven't studied for. Boss doesn't like call-outs.",
+    choices: [
+      { text: "Honestly call boss, explain, offer to pick up extra shift later", points: 2, skill: "Assertive Prioritization", consequence: "Boss annoyed but respects honesty. You study and do well.", emoji: "💚" },
+      { text: "Go to work but bring notes for slow moments", points: 1, skill: "Attempted Balance", consequence: "Exhausted and only study a little, but manage both. Barely.", emoji: "💙" },
+      { text: "Skip studying and hope test is easy", points: -1, skill: "Risky Gambling", consequence: "Test is not easy. Grade suffers.", emoji: "🟠" },
+      { text: "Just don't show up to work without calling", points: -2, skill: "Irresponsible Avoidance", consequence: "Boss is furious. Might lose the job. Never the answer.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'h13', title: "The Party Invitation", timeOfDay: "🏠 After School", timeOrder: 12,
+    situation: "Invited to a party with drinking. Parents don't know and wouldn't approve. You want to go for social reasons.",
+    choices: [
+      { text: "Decide based on your own values, not what others expect", points: 2, skill: "Values-Based Decision", consequence: "Whether you go or not, you make a choice that aligns with who you want to be.", emoji: "💚" },
+      { text: "Go but set personal limits beforehand and stick to them", points: 1, skill: "Harm Reduction", consequence: "You go, stay within boundaries, have a plan. You manage the risk.", emoji: "💙" },
+      { text: "Go and drink more than planned because everyone else is", points: -1, skill: "Loss of Boundaries", consequence: "End up in situations you're not comfortable with.", emoji: "🟠" },
+      { text: "Go, lie to parents, and get really drunk", points: -2, skill: "High-Risk Behavior", consequence: "Something goes wrong. Consequences are serious.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'h14', title: "The Relationship Pressure", timeOfDay: "📱 Evening", timeOrder: 12,
+    situation: "Person you're dating pressures you to send photos you're not comfortable with. 'If you loved me, you would.'",
+    choices: [
+      { text: "'I'm not comfortable with that. Someone who cares wouldn't pressure me.'", points: 2, skill: "Firm Boundary", consequence: "Their response tells you a lot about them.", emoji: "💚" },
+      { text: "Say you're not ready and change subject", points: 1, skill: "Soft Boundary", consequence: "Dodge for now but might come up again. Think about if they respect boundaries.", emoji: "💙" },
+      { text: "Feel guilty and consider doing it even though uncomfortable", points: -1, skill: "Boundary Erosion", consequence: "Guilt isn't a good reason. Discomfort is telling you something.", emoji: "🟠" },
+      { text: "Send the photos because afraid of losing them", points: -2, skill: "Coerced Compliance", consequence: "Once sent, you can't control them. Someone who pressures doesn't truly respect you.", emoji: "🔴" }
+    ]
+  },
+  {
+    id: 'h15', title: "The Future Anxiety", timeOfDay: "🌙 Night", timeOrder: 13,
+    situation: "Lying in bed thinking about everything—college, grades, friendships, future. Can't turn brain off.",
+    choices: [
+      { text: "Write down worries, then one small action for each tomorrow", points: 2, skill: "Action Planning", consequence: "Getting it out of your head helps. You have a plan and can sleep.", emoji: "💚" },
+      { text: "Do a calming activity until mind settles", points: 1, skill: "Self-Soothing", consequence: "Takes time but nervous system calms. You fall asleep eventually.", emoji: "💙" },
+      { text: "Keep scrolling phone hoping distraction helps", points: -1, skill: "Avoidant Coping", consequence: "Blue light keeps you awake. Social media adds more to worry about.", emoji: "🟠" },
+      { text: "Decide everything is hopeless and spiral into darker thoughts", points: -2, skill: "Catastrophic Thinking", consequence: "Thoughts get worse. Reaching out for help is important—you don't have to feel this alone.", emoji: "🔴" }
+    ]
+  }
+];
+
+// ========== HELPER FUNCTIONS ==========
+
+const shuffleArray = (arr) => {
+  const shuffled = [...arr];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
+const selectScenariosForDay = (scenarios, count) => {
+  const byTime = {};
+  scenarios.forEach(s => {
+    if (!byTime[s.timeOrder]) byTime[s.timeOrder] = [];
+    byTime[s.timeOrder].push(s);
+  });
+  const timeSlots = Object.keys(byTime).sort((a, b) => parseInt(a) - parseInt(b));
+  const selected = [];
+  let remaining = count;
+  
+  for (const slot of timeSlots) {
+    if (remaining <= 0) break;
+    const available = shuffleArray(byTime[slot]);
+    const take = Math.min(1, remaining, available.length);
+    selected.push(...available.slice(0, take));
+    remaining -= take;
+  }
+  
+  while (selected.length < count) {
+    const remaining = scenarios.filter(s => !selected.includes(s));
+    if (remaining.length === 0) break;
+    selected.push(shuffleArray(remaining)[0]);
+  }
+  
+  return selected.sort((a, b) => a.timeOrder - b.timeOrder).slice(0, count);
+};
+
+const getStressModifiedScenario = (scenario, stress, wellbeing) => {
+  const s = { ...scenario };
+  if (stress >= 6) {
+    s.stressModifier = { active: true, prefix: "You're already feeling on edge. ", effect: "Your stress is high, making this harder." };
+    s.situation = s.stressModifier.prefix + s.situation;
+  }
+  if (stress >= 9) {
+    s.stressModifier = { active: true, prefix: "Everything feels overwhelming right now. ", effect: "Your stress is very high. Hard to think clearly." };
+    s.situation = s.stressModifier.prefix + s.situation;
+  }
+  if (wellbeing >= 7 && stress < 6) {
+    s.wellbeingModifier = { active: true, prefix: "Things have been going well lately. ", effect: "Your positive momentum helps you handle this." };
+    s.situation = s.wellbeingModifier.prefix + s.situation;
+  }
+  return s;
+};
+
+const getModifiedConsequence = (choice, stress) => {
+  let consequence = choice.consequence;
+  let bonusPoints = 0;
+  let stressChange = 0;
+  let wellbeingChange = 0;
+  
+  if (choice.points === 2) {
+    stressChange = -2; wellbeingChange = 2;
+    if (stress >= 6) { consequence += " Despite your stress, you handled this really well."; bonusPoints = 1; }
+  } else if (choice.points === 1) {
+    stressChange = -1; wellbeingChange = 1;
+  } else if (choice.points === -1) {
+    stressChange = 2; wellbeingChange = -1;
+    if (stress >= 6) consequence += " Being stressed made this harder.";
+  } else if (choice.points === -2) {
+    stressChange = 3; wellbeingChange = -2;
+    if (stress >= 6) consequence += " Your built-up stress made this blow up even more.";
+  }
+  
+  return { consequence, bonusPoints, stressChange, wellbeingChange };
+};
+
+// ========== MAIN COMPONENT ==========
+
+export default function SELAdventure() {
+  const [gameState, setGameState] = useState('start');
+  const [gradeLevel, setGradeLevel] = useState(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [scenarios, setScenarios] = useState([]);
+  const [shuffledChoices, setShuffledChoices] = useState([]);
+  const [selectedChoice, setSelectedChoice] = useState(null);
+  const [modifiedConsequence, setModifiedConsequence] = useState(null);
+  const [score, setScore] = useState(0);
+  const [responses, setResponses] = useState([]);
+  const [playerName, setPlayerName] = useState('');
+  const [avatarColor, setAvatarColor] = useState('#6366f1');
+  const [showReflection, setShowReflection] = useState(false);
+  const [scenarioCount, setScenarioCount] = useState(7);
+  const [stress, setStress] = useState(3);
+  const [wellbeing, setWellbeing] = useState(5);
+  const [stressHistory, setStressHistory] = useState([3]);
+
+  const gradeLevels = [
+    { id: 'elementary', name: 'Elementary School', grades: 'K-5', emoji: '🎨', color: '#10b981', data: elementaryScenarios },
+    { id: 'middle', name: 'Middle School', grades: '6-8', emoji: '📚', color: '#6366f1', data: middleSchoolScenarios },
+    { id: 'high', name: 'High School', grades: '9-12', emoji: '🎓', color: '#8b5cf6', data: highSchoolScenarios }
+  ];
+
+  const colors = ['#6366f1', '#10b981', '#f43f5e', '#f59e0b', '#06b6d4', '#8b5cf6', '#ec4899', '#14b8a6'];
+
+  useEffect(() => {
+    if (gameState === 'playing' && scenarios[currentIndex]) {
+      setShuffledChoices(shuffleArray(scenarios[currentIndex].choices));
+    }
+  }, [currentIndex, gameState, scenarios]);
+
+  const startGame = () => {
+    const level = gradeLevels.find(l => l.id === gradeLevel);
+    const selected = selectScenariosForDay(level.data, scenarioCount);
+    setScenarios(selected);
+    setCurrentIndex(0);
+    setScore(0);
+    setResponses([]);
+    setStress(3);
+    setWellbeing(5);
+    setStressHistory([3]);
+    setGameState('playing');
+  };
+
+  const handleChoice = (choice) => {
+    const mod = getModifiedConsequence(choice, stress);
+    const newStress = Math.max(0, Math.min(12, stress + mod.stressChange));
+    const newWellbeing = Math.max(0, Math.min(10, wellbeing + mod.wellbeingChange));
+    
+    setStress(newStress);
+    setWellbeing(newWellbeing);
+    setStressHistory(prev => [...prev, newStress]);
+    
+    const total = choice.points + mod.bonusPoints;
+    setSelectedChoice(choice);
+    setModifiedConsequence(mod);
+    setScore(prev => prev + total);
+    setResponses(prev => [...prev, {
+      scenario: scenarios[currentIndex].title,
+      timeOfDay: scenarios[currentIndex].timeOfDay,
+      skill: choice.skill,
+      points: total,
+      stressAfter: newStress
+    }]);
+    setGameState('consequence');
+  };
+
+  const nextScenario = () => {
+    setShowReflection(false);
+    if (currentIndex < scenarios.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+      setSelectedChoice(null);
+      setModifiedConsequence(null);
+      setGameState('playing');
+    } else {
+      setGameState('complete');
+    }
+  };
+
+  const getStressColor = (l) => l <= 3 ? '#10b981' : l <= 6 ? '#f59e0b' : l <= 9 ? '#f97316' : '#ef4444';
+  const getWellbeingColor = (l) => l >= 7 ? '#10b981' : l >= 4 ? '#f59e0b' : '#ef4444';
+  const getStressLabel = (l) => l <= 3 ? 'Calm' : l <= 6 ? 'Moderate' : l <= 9 ? 'High' : 'Overwhelmed';
+  const getWellbeingLabel = (l) => l >= 7 ? 'Thriving' : l >= 4 ? 'Managing' : 'Struggling';
+
+  const getScoreLevel = () => {
+    const max = scenarioCount * 3;
+    const pct = (score / max) * 100;
+    if (pct >= 80) return { level: "Coping Champion", color: "#10b981", msg: "You consistently chose strategies that lead to positive outcomes!" };
+    if (pct >= 60) return { level: "Skilled Navigator", color: "#6366f1", msg: "You made mostly helpful choices with room to grow." };
+    if (pct >= 40) return { level: "Learning Explorer", color: "#f59e0b", msg: "You're learning which strategies work best." };
+    return { level: "Beginning Adventurer", color: "#f43f5e", msg: "Keep practicing! Every challenge is a chance to learn." };
+  };
+
+  const currentScenario = scenarios[currentIndex] ? getStressModifiedScenario(scenarios[currentIndex], stress, wellbeing) : null;
+  const levelColor = gradeLevels.find(l => l.id === gradeLevel)?.color || '#6366f1';
+
+  // STYLES
+  const styles = `
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Fredoka+One&display=swap');
+    * { box-sizing: border-box; }
+    .card { background: white; border-radius: 24px; padding: 32px; box-shadow: 0 20px 50px rgba(0,0,0,0.25); max-width: 600px; width: 100%; margin: 0 auto; }
+    .title { font-family: 'Fredoka One', cursive; font-size: 2.2rem; background: linear-gradient(135deg, #6366f1, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; margin-bottom: 8px; }
+    .subtitle { color: #64748b; text-align: center; margin-bottom: 24px; }
+    .label { font-weight: 700; color: #334155; margin-bottom: 10px; display: block; }
+    .grade-btn { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border: 3px solid #e2e8f0; border-radius: 14px; background: white; cursor: pointer; transition: all 0.2s; width: 100%; margin-bottom: 10px; font-family: inherit; }
+    .grade-btn:hover { border-color: #a5b4fc; transform: translateX(4px); }
+    .grade-btn.selected { border-color: var(--color); background: color-mix(in srgb, var(--color) 10%, white); }
+    .grade-emoji { font-size: 1.8rem; }
+    .grade-name { font-weight: 800; color: #1e293b; }
+    .grade-range { color: #64748b; font-size: 0.85rem; }
+    .input { width: 100%; padding: 14px 16px; border: 3px solid #e2e8f0; border-radius: 12px; font-size: 1rem; font-family: inherit; margin-bottom: 16px; }
+    .input:focus { outline: none; border-color: #6366f1; }
+    .color-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; margin-bottom: 16px; }
+    .color-btn { aspect-ratio: 1; border-radius: 10px; border: 3px solid transparent; cursor: pointer; transition: all 0.2s; }
+    .color-btn:hover { transform: scale(1.15); }
+    .color-btn.selected { border-color: #1e293b; }
+    .count-btns { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; }
+    .count-btn { padding: 10px 20px; border: 3px solid #e2e8f0; background: white; border-radius: 10px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .count-btn:hover { border-color: #6366f1; }
+    .count-btn.selected { background: #6366f1; color: white; border-color: #6366f1; }
+    .start-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; border-radius: 12px; font-size: 1.15rem; font-weight: 800; cursor: pointer; font-family: inherit; }
+    .start-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(99,102,241,0.4); }
+    .start-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; background: rgba(255,255,255,0.1); border-radius: 16px; margin-bottom: 14px; backdrop-filter: blur(10px); }
+    .avatar { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: white; font-size: 1.2rem; }
+    .player-name { color: white; font-weight: 700; margin-left: 10px; }
+    .progress { color: rgba(255,255,255,0.8); font-size: 0.85rem; }
+    .score { color: white; font-weight: 800; font-size: 1.1rem; }
+    .meters { display: flex; gap: 14px; padding: 14px 18px; background: white; border-radius: 14px; margin-bottom: 14px; }
+    .meter { flex: 1; }
+    .meter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+    .meter-label { font-weight: 700; font-size: 0.8rem; color: #334155; }
+    .meter-value { font-weight: 800; font-size: 0.75rem; padding: 2px 8px; border-radius: 20px; color: white; }
+    .meter-track { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+    .meter-fill { height: 100%; border-radius: 4px; transition: all 0.4s; }
+    .scenario-card { background: white; border-radius: 20px; padding: 28px; box-shadow: 0 20px 50px rgba(0,0,0,0.25); }
+    .warning { padding: 12px 16px; border-radius: 12px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 0.9rem; }
+    .warning.stress { background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #f59e0b; color: #92400e; }
+    .warning.high-stress { background: linear-gradient(135deg, #fee2e2, #fecaca); border: 2px solid #ef4444; color: #991b1b; }
+    .warning.wellbeing { background: linear-gradient(135deg, #d1fae5, #a7f3d0); border: 2px solid #10b981; color: #065f46; }
+    .scenario-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .scenario-num { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: white; font-size: 1.2rem; }
+    .scenario-title { font-family: 'Fredoka One', cursive; font-size: 1.4rem; color: #1e293b; margin: 0; }
+    .scenario-time { font-size: 0.85rem; color: #6366f1; font-weight: 600; }
+    .situation { font-size: 1.05rem; line-height: 1.6; color: #334155; padding: 18px; background: #f8fafc; border-radius: 14px; border-left: 4px solid #6366f1; margin-bottom: 20px; }
+    .choices-label { font-weight: 700; color: #64748b; margin-bottom: 12px; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; }
+    .choice-btn { width: 100%; padding: 16px 18px; text-align: left; background: #f8fafc; border: 3px solid #e2e8f0; border-radius: 12px; font-size: 0.95rem; line-height: 1.4; cursor: pointer; transition: all 0.2s; font-family: inherit; color: #334155; margin-bottom: 8px; }
+    .choice-btn:hover { border-color: #6366f1; background: white; transform: translateX(6px); }
+    .consequence-card { background: white; border-radius: 24px; padding: 36px; max-width: 550px; width: 100%; text-align: center; }
+    .result-emoji { font-size: 4rem; margin-bottom: 10px; }
+    .points { font-family: 'Fredoka One', cursive; font-size: 2.5rem; margin-bottom: 4px; }
+    .bonus { color: #059669; font-weight: 700; margin-bottom: 8px; }
+    .skill-tag { display: inline-block; padding: 6px 16px; border-radius: 20px; font-weight: 700; font-size: 0.9rem; margin-bottom: 16px; }
+    .consequence-text { font-size: 1rem; line-height: 1.6; color: #334155; padding: 18px; background: #f8fafc; border-radius: 14px; margin-bottom: 16px; text-align: left; }
+    .meter-changes { display: flex; gap: 14px; margin-bottom: 16px; }
+    .meter-change { flex: 1; padding: 12px; border-radius: 12px; text-align: center; }
+    .meter-change-label { font-size: 0.8rem; font-weight: 700; margin-bottom: 2px; }
+    .meter-change-value { font-size: 1.2rem; font-weight: 800; }
+    .next-btn { padding: 14px 40px; border: none; border-radius: 12px; font-size: 1.05rem; font-weight: 700; cursor: pointer; color: white; font-family: inherit; }
+    .next-btn:hover { transform: translateY(-2px); }
+    .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 100; }
+    .modal-content { background: white; border-radius: 20px; padding: 32px; max-width: 450px; width: 100%; text-align: center; }
+    .modal-title { font-family: 'Fredoka One', cursive; font-size: 1.3rem; color: #6366f1; margin-bottom: 12px; }
+    .modal-text { color: #334155; margin-bottom: 16px; line-height: 1.5; }
+    .modal-hint { font-size: 0.9rem; color: #64748b; font-style: italic; margin-bottom: 16px; padding: 12px; background: #fef3c7; border-radius: 10px; }
+    .modal-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .results-card { background: white; border-radius: 24px; padding: 36px; max-width: 650px; width: 100%; margin: 0 auto; }
+    .trophy { font-size: 4rem; text-align: center; margin-bottom: 10px; }
+    .results-title { font-family: 'Fredoka One', cursive; font-size: 1.8rem; color: #1e293b; text-align: center; margin-bottom: 8px; }
+    .level-badge { display: block; margin: 0 auto 10px; padding: 8px 20px; border-radius: 20px; font-weight: 800; color: white; text-align: center; width: fit-content; }
+    .level-msg { color: #64748b; text-align: center; margin-bottom: 20px; }
+    .final-score-box { background: #f8fafc; border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 20px; }
+    .final-score { font-family: 'Fredoka One', cursive; font-size: 3rem; color: #6366f1; }
+    .score-max { color: #64748b; font-size: 0.9rem; }
+    .progress-bar { height: 12px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin-top: 12px; }
+    .progress-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, #f43f5e, #f59e0b, #10b981); }
+    .journey-box { background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #f59e0b; border-radius: 16px; padding: 20px; margin-bottom: 20px; }
+    .journey-title { font-weight: 800; color: #92400e; margin-bottom: 12px; }
+    .journey-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .journey-stat { background: white; border-radius: 10px; padding: 12px; text-align: center; }
+    .journey-stat-value { font-size: 1.3rem; font-weight: 800; color: #92400e; }
+    .journey-stat-label { font-size: 0.75rem; color: #78716c; }
+    .journey-insight { margin-top: 12px; padding: 12px; background: white; border-radius: 10px; font-size: 0.9rem; color: #78716c; }
+    .response-list { max-height: 250px; overflow-y: auto; border: 2px solid #e2e8f0; border-radius: 12px; padding: 12px; margin-bottom: 16px; }
+    .response-item { padding: 12px; background: #f8fafc; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid; }
+    .response-item:last-child { margin-bottom: 0; }
+    .response-scenario { font-weight: 700; color: #334155; font-size: 0.9rem; }
+    .response-skill { font-size: 0.8rem; color: #64748b; }
+    .response-points { float: right; font-weight: 800; }
+    .response-stress { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
+    .restart-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 800; cursor: pointer; font-family: inherit; }
+    .restart-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(99,102,241,0.4); }
+  `;
+
+  // ========== RENDER ==========
+
+  // START SCREEN
+  if (gameState === 'start') {
+    return (
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)', fontFamily: "'Nunito', sans-serif", padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <style>{styles}</style>
+        <div className="card">
+          <h1 className="title">Life Quest</h1>
+          <p className="subtitle">A Social-Emotional Adventure</p>
+          
+          <span className="label">Select Your Grade Level</span>
+          {gradeLevels.map(level => (
+            <button
+              key={level.id}
+              className={`grade-btn ${gradeLevel === level.id ? 'selected' : ''}`}
+              style={{ '--color': level.color }}
+              onClick={() => setGradeLevel(level.id)}
+            >
+              <span className="grade-emoji">{level.emoji}</span>
+              <div>
+                <div className="grade-name">{level.name}</div>
+                <div className="grade-range">Grades {level.grades}</div>
+              </div>
+            </button>
+          ))}
+          
+          <span className="label" style={{ marginTop: 16 }}>Your Name</span>
+          <input
+            className="input"
+            placeholder="Enter your name..."
+            value={playerName}
+            onChange={(e) => setPlayerName(e.target.value)}
+            maxLength={20}
+          />
+          
+          <span className="label">Choose Your Color</span>
+          <div className="color-grid">
+            {colors.map(c => (
+              <button
+                key={c}
+                className={`color-btn ${avatarColor === c ? 'selected' : ''}`}
+                style={{ background: c }}
+                onClick={() => setAvatarColor(c)}
+              />
+            ))}
+          </div>
+          
+          <span className="label">How Many Scenarios?</span>
+          <div className="count-btns">
+            {[5, 7, 10].map(n => (
+              <button
+                key={n}
+                className={`count-btn ${scenarioCount === n ? 'selected' : ''}`}
+                onClick={() => setScenarioCount(n)}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+          
+          <button
+            className="start-btn"
+            onClick={startGame}
+            disabled={!gradeLevel || !playerName.trim()}
+          >
+            Begin Your Day! 🚀
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // PLAYING SCREEN
+  if (gameState === 'playing' && currentScenario) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)', fontFamily: "'Nunito', sans-serif", padding: '20px' }}>
+        <style>{styles}</style>
+        <div style={{ maxWidth: 700, margin: '0 auto' }}>
+          <div className="header">
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div className="avatar" style={{ background: avatarColor }}>{playerName.charAt(0).toUpperCase()}</div>
+              <span className="player-name">{playerName}</span>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div className="progress">Scenario {currentIndex + 1} of {scenarios.length}</div>
+              <div className="score">Score: {score}</div>
+            </div>
+          </div>
+          
+          <div className="meters">
+            <div className="meter">
+              <div className="meter-header">
+                <span className="meter-label">😰 Stress</span>
+                <span className="meter-value" style={{ background: getStressColor(stress) }}>{getStressLabel(stress)}</span>
+              </div>
+              <div className="meter-track">
+                <div className="meter-fill" style={{ width: `${(stress/12)*100}%`, background: getStressColor(stress) }} />
+              </div>
+            </div>
+            <div className="meter">
+              <div className="meter-header">
+                <span className="meter-label">💪 Wellbeing</span>
+                <span className="meter-value" style={{ background: getWellbeingColor(wellbeing) }}>{getWellbeingLabel(wellbeing)}</span>
+              </div>
+              <div className="meter-track">
+                <div className="meter-fill" style={{ width: `${(wellbeing/10)*100}%`, background: getWellbeingColor(wellbeing) }} />
+              </div>
+            </div>
+          </div>
+          
+          <div className="scenario-card">
+            {currentScenario.stressModifier?.active && (
+              <div className={`warning ${stress >= 9 ? 'high-stress' : 'stress'}`}>
+                <span>{stress >= 9 ? '🔥' : '⚠️'}</span>
+                <span>{currentScenario.stressModifier.effect}</span>
+              </div>
+            )}
+            {currentScenario.wellbeingModifier?.active && (
+              <div className="warning wellbeing">
+                <span>✨</span>
+                <span>{currentScenario.wellbeingModifier.effect}</span>
+              </div>
+            )}
+            
+            <div className="scenario-header">
+              <div className="scenario-num" style={{ background: levelColor }}>{currentIndex + 1}</div>
+              <div>
+                <h2 className="scenario-title">{scenarios[currentIndex].title}</h2>
+                <span className="scenario-time">{scenarios[currentIndex].timeOfDay}</span>
+              </div>
+            </div>
+            
+            <p className="situation">{currentScenario.situation}</p>
+            
+            <div className="choices-label">What do you do?</div>
+            {shuffledChoices.map((choice, i) => (
+              <button key={i} className="choice-btn" onClick={() => handleChoice(choice)}>
+                {choice.text}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // CONSEQUENCE SCREEN
+  if (gameState === 'consequence' && selectedChoice && modifiedConsequence) {
+    const isPositive = selectedChoice.points > 0;
+    const total = selectedChoice.points + modifiedConsequence.bonusPoints;
+    
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: isPositive 
+          ? 'linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%)'
+          : 'linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #b91c1c 100%)',
+        fontFamily: "'Nunito', sans-serif",
+        padding: '20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <style>{styles}</style>
+        <div className="consequence-card">
+          <div className="result-emoji">{selectedChoice.emoji}</div>
+          <div className="points" style={{ color: isPositive ? '#059669' : '#dc2626' }}>
+            {total > 0 ? '+' : ''}{total} Points
+          </div>
+          {modifiedConsequence.bonusPoints > 0 && (
+            <div className="bonus">+{modifiedConsequence.bonusPoints} Resilience Bonus!</div>
+          )}
+          <div className="skill-tag" style={{ background: isPositive ? '#d1fae5' : '#fee2e2', color: isPositive ? '#065f46' : '#991b1b' }}>
+            {selectedChoice.skill}
+          </div>
+          <p className="consequence-text">{modifiedConsequence.consequence}</p>
+          
+          <div className="meter-changes">
+            <div className="meter-change" style={{ background: modifiedConsequence.stressChange <= 0 ? '#d1fae5' : '#fee2e2', color: modifiedConsequence.stressChange <= 0 ? '#065f46' : '#991b1b' }}>
+              <div className="meter-change-label">😰 Stress</div>
+              <div className="meter-change-value">{modifiedConsequence.stressChange > 0 ? '+' : ''}{modifiedConsequence.stressChange}</div>
+            </div>
+            <div className="meter-change" style={{ background: modifiedConsequence.wellbeingChange >= 0 ? '#d1fae5' : '#fee2e2', color: modifiedConsequence.wellbeingChange >= 0 ? '#065f46' : '#991b1b' }}>
+              <div className="meter-change-label">💪 Wellbeing</div>
+              <div className="meter-change-value">{modifiedConsequence.wellbeingChange > 0 ? '+' : ''}{modifiedConsequence.wellbeingChange}</div>
+            </div>
+          </div>
+          
+          <button className="next-btn" style={{ background: isPositive ? '#059669' : '#dc2626' }} onClick={() => setShowReflection(true)}>
+            Continue →
+          </button>
+        </div>
+        
+        {showReflection && (
+          <div className="modal">
+            <div className="modal-content">
+              <h3 className="modal-title">🤔 Quick Reflection</h3>
+              <p className="modal-text">
+                {isPositive 
+                  ? "What made this choice helpful in this situation?"
+                  : "What might have been a better approach here?"
+                }
+              </p>
+              {stress >= 6 && (
+                <div className="modal-hint">
+                  💡 Notice how your stress level affected this situation!
+                </div>
+              )}
+              <button className="modal-btn" onClick={nextScenario}>
+                I've Reflected - Continue
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // COMPLETE SCREEN
+  if (gameState === 'complete') {
+    const scoreInfo = getScoreLevel();
+    const max = scenarioCount * 3;
+    const min = scenarioCount * -2;
+    const pct = Math.max(0, ((score - min) / (max - min)) * 100);
+    const avgStress = stressHistory.reduce((a, b) => a + b, 0) / stressHistory.length;
+    const peakStress = Math.max(...stressHistory);
+    const endStress = stressHistory[stressHistory.length - 1];
+    
+    return (
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)', fontFamily: "'Nunito', sans-serif", padding: '20px' }}>
+        <style>{styles}</style>
+        <div className="results-card">
+          <div className="trophy">🏆</div>
+          <h1 className="results-title">Day Complete!</h1>
+          <span className="level-badge" style={{ background: scoreInfo.color }}>{scoreInfo.level}</span>
+          <p className="level-msg">{scoreInfo.msg}</p>
+          
+          <div className="final-score-box">
+            <div className="final-score">{score}</div>
+            <div className="score-max">out of {max} possible points</div>
+            <div className="progress-bar">
+              <div className="progress-fill" style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+          
+          <div className="journey-box">
+            <div className="journey-title">📊 Your Stress Journey</div>
+            <div className="journey-stats">
+              <div className="journey-stat">
+                <div className="journey-stat-value">{avgStress.toFixed(1)}</div>
+                <div className="journey-stat-label">Avg Stress</div>
+              </div>
+              <div className="journey-stat">
+                <div className="journey-stat-value">{peakStress}</div>
+                <div className="journey-stat-label">Peak Stress</div>
+              </div>
+              <div className="journey-stat">
+                <div className="journey-stat-value">{endStress}</div>
+                <div className="journey-stat-label">Final Stress</div>
+              </div>
+            </div>
+            <div className="journey-insight">
+              {endStress <= 3 
+                ? "🌟 You finished with low stress! Your coping choices kept you balanced."
+                : endStress <= 6
+                ? "👍 You managed stress reasonably well through the day."
+                : "⚠️ Stress built up over your day. Notice how earlier choices affected later situations!"
+              }
+            </div>
+          </div>
+          
+          <span className="label">📋 Your Day</span>
+          <div className="response-list">
+            {responses.map((r, i) => (
+              <div key={i} className="response-item" style={{ borderColor: r.points > 0 ? '#10b981' : r.points < 0 ? '#f43f5e' : '#f59e0b' }}>
+                <span className="response-points" style={{ color: r.points > 0 ? '#059669' : '#dc2626' }}>
+                  {r.points > 0 ? '+' : ''}{r.points}
+                </span>
+                <div className="response-scenario">{r.timeOfDay} {r.scenario}</div>
+                <div className="response-skill">{r.skill}</div>
+                <div className="response-stress">Stress after: {r.stressAfter}</div>
+              </div>
+            ))}
+          </div>
+          
+          <button className="restart-btn" onClick={() => setGameState('start')}>
+            Play Again 🔄
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
