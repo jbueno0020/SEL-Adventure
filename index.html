@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Life Quest - SEL Adventure Game</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    #root {
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // ========== SCENARIO DATA ==========
+
+    const elementaryScenarios = [
+      {
+        id: 'e1', title: "The Rushed Morning", timeOfDay: "🌅 Morning at Home", timeOrder: 1,
+        situation: "You woke up late and now you're rushing to get ready. Your mom says you don't have time for your favorite cereal—you have to eat something quick.",
+        choices: [
+          { text: "Say 'okay' and grab a banana to eat on the way", points: 2, skill: "Flexibility", consequence: "You make it to school on time with food in your belly. Mom thanks you for being so cooperative!", emoji: "💚" },
+          { text: "Feel disappointed but grab a granola bar without complaining", points: 1, skill: "Acceptance", consequence: "You get to school okay. Not your favorite breakfast, but you handled it well.", emoji: "💙" },
+          { text: "Whine and say 'But I ALWAYS have my cereal!'", points: -1, skill: "Inflexibility", consequence: "Mom gets more stressed and now everyone is frustrated. You still don't get the cereal.", emoji: "🟠" },
+          { text: "Throw yourself on the couch and refuse to move", points: -2, skill: "Tantrum", consequence: "Now you're really late AND hungry. Mom is upset and you start the day feeling terrible.", emoji: "🔴" }
+        ]
+      },
+      {
+        id: 'e2', title: "The Missing Shoe", timeOfDay: "🌅 Morning at Home", timeOrder: 1,
+        situation: "You can only find one of your shoes and the bus is coming in 5 minutes. You're starting to panic!",
+        choices: [
+          { text: "Take a deep breath and think about where you last had them", points: 2, skill: "Problem-Solving", consequence: "You remember you kicked them off by the couch! You find your shoe and make it to the bus.", emoji: "💚" },
+          { text: "Ask a grown-up to help you look", points: 1, skill: "Help-Seeking", consequence: "Dad helps you look and finds it under your bed. You make it to the bus!", emoji: "💙" },
+          { text: "Start crying and say you can't go to school", points: -1, skill: "Overwhelm", consequence: "The crying uses up time. Someone finds the shoe but now you feel embarrassed.", emoji: "🟠" },
+          { text: "Get mad and throw the shoe you DID find", points: -2, skill: "Aggression", consequence: "Now you might have TWO missing shoes! Plus you're in trouble for throwing things.", emoji: "🔴" }
+        ]
+      },
+      {
+        id: 'e3', title: "The Bus Seat", timeOfDay: "🚌 Bus Ride", timeOrder: 2,
+        situation: "You get on the bus and see that someone is sitting in the seat where you usually sit with your friend.",
+        choices: [
+          { text: "Find another seat and wave to your friend—you can talk at school", points: 2, skill: "Flexible Thinking", consequence: "You sit somewhere new and actually make a new friend! Your regular friend waves back.", emoji: "💚" },
+          { text: "Politely ask if you can squeeze in", points: 1, skill: "Assertiveness", consequence: "Everyone scoots over to make room. You get to sit with your friend!", emoji: "💙" },
+          { text: "Stand in the aisle and stare at them until they move", points: -1, skill: "Passive Confrontation", consequence: "The bus driver tells you to sit down. You feel embarrassed.", emoji: "🟠" },
+          { text: "Tell them loudly 'That's MY seat! Move!'", points: -2, skill: "Aggression", consequence: "The other kid feels bad and the bus driver gives you a warning.", emoji: "🔴" }
+        ]
+      }
+    ];
+
+    const middleSchoolScenarios = elementaryScenarios; // Using same for demo
+    const highSchoolScenarios = elementaryScenarios; // Using same for demo
+
+    // ========== HELPER FUNCTIONS ==========
+
+    const shuffleArray = (arr) => {
+      const shuffled = [...arr];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    };
+
+    const selectScenariosForDay = (scenarios, count) => {
+      return shuffleArray(scenarios).slice(0, Math.min(count, scenarios.length));
+    };
+
+    const getStressModifiedScenario = (scenario, stress, wellbeing) => {
+      const s = { ...scenario };
+      if (stress >= 6) {
+        s.stressModifier = { active: true, prefix: "You're already feeling on edge. ", effect: "Your stress is high, making this harder." };
+        s.situation = s.stressModifier.prefix + s.situation;
+      }
+      if (stress >= 9) {
+        s.stressModifier = { active: true, prefix: "Everything feels overwhelming right now. ", effect: "Your stress is very high. Hard to think clearly." };
+        s.situation = s.stressModifier.prefix + s.situation;
+      }
+      if (wellbeing >= 7 && stress < 6) {
+        s.wellbeingModifier = { active: true, prefix: "Things have been going well lately. ", effect: "Your positive momentum helps you handle this." };
+        s.situation = s.wellbeingModifier.prefix + s.situation;
+      }
+      return s;
+    };
+
+    const getModifiedConsequence = (choice, stress) => {
+      let consequence = choice.consequence;
+      let bonusPoints = 0;
+      let stressChange = 0;
+      let wellbeingChange = 0;
+
+      if (choice.points === 2) {
+        stressChange = -2; wellbeingChange = 2;
+        if (stress >= 6) { consequence += " Despite your stress, you handled this really well."; bonusPoints = 1; }
+      } else if (choice.points === 1) {
+        stressChange = -1; wellbeingChange = 1;
+      } else if (choice.points === -1) {
+        stressChange = 2; wellbeingChange = -1;
+        if (stress >= 6) consequence += " Being stressed made this harder.";
+      } else if (choice.points === -2) {
+        stressChange = 3; wellbeingChange = -2;
+        if (stress >= 6) consequence += " Your built-up stress made this blow up even more.";
+      }
+
+      return { consequence, bonusPoints, stressChange, wellbeingChange };
+    };
+
+    // ========== CHARACTER STRENGTHS DATA ==========
+
+    const characterStrengths = [
+      {
+        id: 'creative',
+        name: 'Creative Thinker',
+        emoji: '🎨',
+        description: 'You find unique solutions to problems',
+        hint: 'Think outside the box - there might be a creative approach here!'
+      },
+      {
+        id: 'friend',
+        name: 'Good Friend',
+        emoji: '🤝',
+        description: 'You understand and support others',
+        hint: 'How would a caring friend handle this situation?'
+      },
+      {
+        id: 'calm',
+        name: 'Calm Under Pressure',
+        emoji: '🧘',
+        description: 'You stay cool when things get tough',
+        hint: 'Take a breath - staying calm will help you choose wisely.'
+      },
+      {
+        id: 'brave',
+        name: 'Brave Heart',
+        emoji: '🦁',
+        description: 'You have courage to do what\'s right',
+        hint: 'Sometimes the brave choice is the hardest one.'
+      },
+      {
+        id: 'thoughtful',
+        name: 'Deep Thinker',
+        emoji: '🤔',
+        description: 'You consider consequences carefully',
+        hint: 'Think ahead - what might happen after each choice?'
+      },
+      {
+        id: 'positive',
+        name: 'Optimistic Spirit',
+        emoji: '✨',
+        description: 'You find the bright side',
+        hint: 'Look for the positive possibility in your choices!'
+      }
+    ];
+
+    // ========== MAIN COMPONENT ==========
+
+    function SELAdventure() {
+      const [gameState, setGameState] = useState('start');
+      const [gradeLevel, setGradeLevel] = useState(null);
+      const [currentIndex, setCurrentIndex] = useState(0);
+      const [scenarios, setScenarios] = useState([]);
+      const [shuffledChoices, setShuffledChoices] = useState([]);
+      const [selectedChoice, setSelectedChoice] = useState(null);
+      const [modifiedConsequence, setModifiedConsequence] = useState(null);
+      const [score, setScore] = useState(0);
+      const [responses, setResponses] = useState([]);
+      const [playerName, setPlayerName] = useState('');
+      const [avatarColor, setAvatarColor] = useState('#6366f1');
+      const [showReflection, setShowReflection] = useState(false);
+      const [scenarioCount, setScenarioCount] = useState(7);
+      const [stress, setStress] = useState(3);
+      const [wellbeing, setWellbeing] = useState(5);
+      const [stressHistory, setStressHistory] = useState([3]);
+
+      // Character development states
+      const [characterStrength, setCharacterStrength] = useState(null);
+      const [backstoryAnswers, setBackstoryAnswers] = useState({
+        calmActivity: '',
+        supportPerson: '',
+        proudMoment: ''
+      });
+
+      const gradeLevels = [
+        { id: 'elementary', name: 'Elementary School', grades: 'K-5', emoji: '🎨', color: '#10b981', data: elementaryScenarios },
+        { id: 'middle', name: 'Middle School', grades: '6-8', emoji: '📚', color: '#6366f1', data: middleSchoolScenarios },
+        { id: 'high', name: 'High School', grades: '9-12', emoji: '🎓', color: '#8b5cf6', data: highSchoolScenarios }
+      ];
+
+      const colors = ['#6366f1', '#10b981', '#f43f5e', '#f59e0b', '#06b6d4', '#8b5cf6', '#ec4899', '#14b8a6'];
+
+      useEffect(() => {
+        if (gameState === 'playing' && scenarios[currentIndex]) {
+          setShuffledChoices(shuffleArray(scenarios[currentIndex].choices));
+        }
+      }, [currentIndex, gameState, scenarios]);
+
+      const startGame = () => {
+        const level = gradeLevels.find(l => l.id === gradeLevel);
+        const selected = selectScenariosForDay(level.data, scenarioCount);
+        setScenarios(selected);
+        setCurrentIndex(0);
+        setScore(0);
+        setResponses([]);
+        setStress(3);
+        setWellbeing(5);
+        setStressHistory([3]);
+        setGameState('playing');
+      };
+
+      const handleChoice = (choice) => {
+        const mod = getModifiedConsequence(choice, stress);
+        const newStress = Math.max(0, Math.min(12, stress + mod.stressChange));
+        const newWellbeing = Math.max(0, Math.min(10, wellbeing + mod.wellbeingChange));
+
+        setStress(newStress);
+        setWellbeing(newWellbeing);
+        setStressHistory(prev => [...prev, newStress]);
+
+        const total = choice.points + mod.bonusPoints;
+        setSelectedChoice(choice);
+        setModifiedConsequence(mod);
+        setScore(prev => prev + total);
+        setResponses(prev => [...prev, {
+          scenario: scenarios[currentIndex].title,
+          timeOfDay: scenarios[currentIndex].timeOfDay,
+          skill: choice.skill,
+          points: total,
+          stressAfter: newStress
+        }]);
+        setGameState('consequence');
+      };
+
+      const nextScenario = () => {
+        setShowReflection(false);
+        if (currentIndex < scenarios.length - 1) {
+          setCurrentIndex(prev => prev + 1);
+          setSelectedChoice(null);
+          setModifiedConsequence(null);
+          setGameState('playing');
+        } else {
+          setGameState('complete');
+        }
+      };
+
+      const getStressColor = (l) => l <= 3 ? '#10b981' : l <= 6 ? '#f59e0b' : l <= 9 ? '#f97316' : '#ef4444';
+      const getWellbeingColor = (l) => l >= 7 ? '#10b981' : l >= 4 ? '#f59e0b' : '#ef4444';
+      const getStressLabel = (l) => l <= 3 ? 'Calm' : l <= 6 ? 'Moderate' : l <= 9 ? 'High' : 'Overwhelmed';
+      const getWellbeingLabel = (l) => l >= 7 ? 'Thriving' : l >= 4 ? 'Managing' : 'Struggling';
+
+      const getCharacterExpression = () => {
+        if (stress >= 9) return { mouth: '😰', eyes: '😖', face: 'overwhelmed' };
+        if (stress >= 6) return { mouth: '😟', eyes: '😕', face: 'stressed' };
+        if (wellbeing >= 7) return { mouth: '😊', eyes: '😄', face: 'happy' };
+        if (wellbeing < 4) return { mouth: '😔', eyes: '😢', face: 'sad' };
+        return { mouth: '🙂', eyes: '😐', face: 'neutral' };
+      };
+
+      const getInnerThought = () => {
+        if (stress >= 9 && wellbeing < 4) {
+          return "Everything feels like too much right now...";
+        } else if (stress >= 9) {
+          return "I'm feeling really overwhelmed...";
+        } else if (stress >= 6 && wellbeing >= 7) {
+          return "I'm stressed but I can handle this.";
+        } else if (stress >= 6) {
+          return "Things are getting harder to manage...";
+        } else if (wellbeing >= 7) {
+          return "I'm feeling good about how things are going!";
+        } else if (wellbeing < 4) {
+          return "I wish I could do better...";
+        } else {
+          return "Taking it one step at a time.";
+        }
+      };
+
+      const getScoreLevel = () => {
+        const max = scenarioCount * 3;
+        const pct = (score / max) * 100;
+        if (pct >= 80) return { level: "Coping Champion", color: "#10b981", msg: "You consistently chose strategies that lead to positive outcomes!" };
+        if (pct >= 60) return { level: "Skilled Navigator", color: "#6366f1", msg: "You made mostly helpful choices with room to grow." };
+        if (pct >= 40) return { level: "Learning Explorer", color: "#f59e0b", msg: "You're learning which strategies work best." };
+        return { level: "Beginning Adventurer", color: "#f43f5e", msg: "Keep practicing! Every challenge is a chance to learn." };
+      };
+
+      const currentScenario = scenarios[currentIndex] ? getStressModifiedScenario(scenarios[currentIndex], stress, wellbeing) : null;
+      const levelColor = gradeLevels.find(l => l.id === gradeLevel)?.color || '#6366f1';
+
+      // Note: This is a simplified demo version with 3 scenarios per grade level
+      // For the full experience, use the complete "Game v1" file
+
+      return (
+        <div style={{ fontFamily: "'Nunito', sans-serif" }}>
+          <style>{`
+            @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Fredoka+One&display=swap');
+            * { box-sizing: border-box; }
+            .card { background: white; border-radius: 24px; padding: 32px; box-shadow: 0 20px 50px rgba(0,0,0,0.25); max-width: 600px; width: 100%; margin: 0 auto; }
+            .title { font-family: 'Fredoka One', cursive; font-size: 2.2rem; background: linear-gradient(135deg, #6366f1, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; margin-bottom: 8px; }
+            .subtitle { color: #64748b; text-align: center; margin-bottom: 24px; }
+            .label { font-weight: 700; color: #334155; margin-bottom: 10px; display: block; }
+            .grade-btn { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border: 3px solid #e2e8f0; border-radius: 14px; background: white; cursor: pointer; transition: all 0.2s; width: 100%; margin-bottom: 10px; font-family: inherit; }
+            .grade-btn:hover { border-color: #a5b4fc; transform: translateX(4px); }
+            .grade-btn.selected { border-color: var(--color); background: color-mix(in srgb, var(--color) 10%, white); }
+            .start-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; border-radius: 12px; font-size: 1.15rem; font-weight: 800; cursor: pointer; font-family: inherit; }
+            .start-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(99,102,241,0.4); }
+            .start-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+            .character-visual { width: 120px; height: 120px; margin: 0 auto 16px; position: relative; }
+            .character-face { width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; box-shadow: 0 8px 20px rgba(0,0,0,0.15); transition: all 0.3s ease; }
+            .thought-bubble { position: relative; background: white; border-radius: 20px; padding: 16px 20px; margin: 16px auto; max-width: 500px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 2px solid #e2e8f0; }
+            .thought-text { color: #334155; font-size: 0.95rem; font-style: italic; text-align: center; font-weight: 600; }
+            .backstory-input { width: 100%; padding: 12px 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 0.95rem; font-family: inherit; margin-bottom: 16px; resize: vertical; min-height: 60px; }
+            .strength-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
+            .strength-btn { padding: 14px; border: 3px solid #e2e8f0; border-radius: 12px; background: white; cursor: pointer; transition: all 0.2s; font-family: inherit; text-align: left; }
+            .strength-btn.selected { border-color: #6366f1; background: #eef2ff; }
+            .backstory-question { font-weight: 700; color: #334155; margin-bottom: 8px; font-size: 0.95rem; }
+            .color-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; margin-bottom: 16px; }
+            .color-btn { aspect-ratio: 1; border-radius: 10px; border: 3px solid transparent; cursor: pointer; transition: all 0.2s; }
+            .color-btn.selected { border-color: #1e293b; }
+            .input { width: 100%; padding: 14px 16px; border: 3px solid #e2e8f0; border-radius: 12px; font-size: 1rem; font-family: inherit; margin-bottom: 16px; }
+          `}</style>
+
+          {gameState === 'start' && (
+            <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)', padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="card">
+                <h1 className="title">Life Quest</h1>
+                <p className="subtitle">A Social-Emotional Adventure</p>
+
+                <span className="label">Select Your Grade Level</span>
+                {gradeLevels.map(level => (
+                  <button
+                    key={level.id}
+                    className={`grade-btn ${gradeLevel === level.id ? 'selected' : ''}`}
+                    style={{ '--color': level.color }}
+                    onClick={() => setGradeLevel(level.id)}
+                  >
+                    <span style={{ fontSize: '1.8rem' }}>{level.emoji}</span>
+                    <div>
+                      <div style={{ fontWeight: 800, color: '#1e293b' }}>{level.name}</div>
+                      <div style={{ color: '#64748b', fontSize: '0.85rem' }}>Grades {level.grades}</div>
+                    </div>
+                  </button>
+                ))}
+
+                <span className="label" style={{ marginTop: 16 }}>Your Name</span>
+                <input
+                  className="input"
+                  placeholder="Enter your name..."
+                  value={playerName}
+                  onChange={(e) => setPlayerName(e.target.value)}
+                  maxLength={20}
+                />
+
+                <span className="label">Choose Your Color</span>
+                <div className="color-grid">
+                  {colors.map(c => (
+                    <button
+                      key={c}
+                      className={`color-btn ${avatarColor === c ? 'selected' : ''}`}
+                      style={{ background: c }}
+                      onClick={() => setAvatarColor(c)}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  className="start-btn"
+                  onClick={() => setGameState('backstory')}
+                  disabled={!gradeLevel || !playerName.trim()}
+                >
+                  Continue to Character Setup 🚀
+                </button>
+              </div>
+            </div>
+          )}
+
+          {gameState === 'backstory' && (
+            <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)', padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="card">
+                <h1 className="title">Get to Know Yourself</h1>
+                <p className="subtitle">These questions help us understand your character better</p>
+
+                <div className="character-visual">
+                  <div className="character-face" style={{ background: avatarColor }}>
+                    <span style={{ fontSize: '3.5rem' }}>😊</span>
+                  </div>
+                </div>
+
+                <div className="backstory-question">What makes you feel calm and peaceful?</div>
+                <textarea
+                  className="backstory-input"
+                  placeholder="e.g., Reading a book, listening to music, spending time outside..."
+                  value={backstoryAnswers.calmActivity}
+                  onChange={(e) => setBackstoryAnswers(prev => ({ ...prev, calmActivity: e.target.value }))}
+                  maxLength={150}
+                />
+
+                <div className="backstory-question">Who do you talk to when you're stressed or need help?</div>
+                <textarea
+                  className="backstory-input"
+                  placeholder="e.g., My mom, my best friend, my teacher..."
+                  value={backstoryAnswers.supportPerson}
+                  onChange={(e) => setBackstoryAnswers(prev => ({ ...prev, supportPerson: e.target.value }))}
+                  maxLength={150}
+                />
+
+                <div className="backstory-question">What's something you did recently that made you proud?</div>
+                <textarea
+                  className="backstory-input"
+                  placeholder="e.g., Helped a friend, finished a hard project, learned something new..."
+                  value={backstoryAnswers.proudMoment}
+                  onChange={(e) => setBackstoryAnswers(prev => ({ ...prev, proudMoment: e.target.value }))}
+                  maxLength={150}
+                />
+
+                <span className="label">Choose Your Character Strength</span>
+                <p className="subtitle" style={{ fontSize: '0.85rem', marginTop: -16, marginBottom: 16 }}>This strength will give you hints during tough situations</p>
+
+                <div className="strength-grid">
+                  {characterStrengths.map(strength => (
+                    <button
+                      key={strength.id}
+                      className={`strength-btn ${characterStrength === strength.id ? 'selected' : ''}`}
+                      onClick={() => setCharacterStrength(strength.id)}
+                    >
+                      <span style={{ fontSize: '1.8rem', display: 'block', marginBottom: 6 }}>{strength.emoji}</span>
+                      <span style={{ fontWeight: 800, color: '#1e293b', fontSize: '0.9rem', display: 'block', marginBottom: 3 }}>{strength.name}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{strength.description}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  className="start-btn"
+                  onClick={startGame}
+                  disabled={!characterStrength || !backstoryAnswers.calmActivity.trim() || !backstoryAnswers.supportPerson.trim() || !backstoryAnswers.proudMoment.trim()}
+                >
+                  Begin Your Day! 🚀
+                </button>
+              </div>
+            </div>
+          )}
+
+          {gameState === 'playing' && currentScenario && (
+            <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)', padding: '20px' }}>
+              <div style={{ maxWidth: 700, margin: '0 auto' }}>
+                <div style={{ background: 'white', borderRadius: '20px', padding: '20px', marginBottom: '14px' }}>
+                  <div className="character-visual">
+                    <div className="character-face" style={{ background: avatarColor }}>
+                      <span>{getCharacterExpression().mouth}</span>
+                    </div>
+                  </div>
+                  <div className="thought-bubble">
+                    <div className="thought-text">
+                      <span style={{ fontSize: '1.3rem', marginRight: 8 }}>💭</span>
+                      {getInnerThought()}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ background: 'white', borderRadius: '20px', padding: '28px' }}>
+                  <h2 style={{ fontFamily: "'Fredoka One', cursive", fontSize: '1.4rem', color: '#1e293b', marginBottom: 16 }}>{scenarios[currentIndex].title}</h2>
+                  <p style={{ fontSize: '1.05rem', lineHeight: 1.6, color: '#334155', padding: 18, background: '#f8fafc', borderRadius: 14, borderLeft: '4px solid #6366f1', marginBottom: 20 }}>
+                    {currentScenario.situation}
+                  </p>
+
+                  {stress >= 6 && characterStrength && (
+                    <div style={{ background: 'linear-gradient(135deg, #fef3c7, #fde68a)', border: '2px solid #f59e0b', borderRadius: 12, padding: '14px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: '1.5rem' }}>
+                        {characterStrengths.find(s => s.id === characterStrength)?.emoji}
+                      </span>
+                      <div>
+                        <div style={{ fontWeight: 800, color: '#92400e', marginBottom: 4 }}>
+                          {characterStrengths.find(s => s.id === characterStrength)?.name} says:
+                        </div>
+                        <div style={{ color: '#92400e', fontWeight: 600, fontSize: '0.9rem' }}>
+                          {characterStrengths.find(s => s.id === characterStrength)?.hint}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div style={{ fontWeight: 700, color: '#64748b', marginBottom: 12, textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: 1 }}>What do you do?</div>
+                  {shuffledChoices.map((choice, i) => (
+                    <button key={i} onClick={() => handleChoice(choice)} style={{ width: '100%', padding: '16px 18px', textAlign: 'left', background: '#f8fafc', border: '3px solid #e2e8f0', borderRadius: 12, fontSize: '0.95rem', lineHeight: 1.4, cursor: 'pointer', fontFamily: 'inherit', color: '#334155', marginBottom: 8 }}>
+                      {choice.text}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {gameState === 'consequence' && selectedChoice && modifiedConsequence && (
+            <div style={{ minHeight: '100vh', background: selectedChoice.points > 0 ? 'linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%)' : 'linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #b91c1c 100%)', padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ background: 'white', borderRadius: 24, padding: 36, maxWidth: 550, width: '100%', textAlign: 'center' }}>
+                <div style={{ fontSize: '4rem', marginBottom: 10 }}>{selectedChoice.emoji}</div>
+                <div style={{ fontFamily: "'Fredoka One', cursive", fontSize: '2.5rem', marginBottom: 4, color: selectedChoice.points > 0 ? '#059669' : '#dc2626' }}>
+                  {(selectedChoice.points + modifiedConsequence.bonusPoints) > 0 ? '+' : ''}{selectedChoice.points + modifiedConsequence.bonusPoints} Points
+                </div>
+                <p style={{ fontSize: '1rem', lineHeight: 1.6, color: '#334155', padding: 18, background: '#f8fafc', borderRadius: 14, marginBottom: 16, textAlign: 'left' }}>
+                  {modifiedConsequence.consequence}
+                </p>
+                <button onClick={() => setShowReflection(true)} style={{ padding: '14px 40px', border: 'none', borderRadius: 12, fontSize: '1.05rem', fontWeight: 700, cursor: 'pointer', color: 'white', fontFamily: 'inherit', background: selectedChoice.points > 0 ? '#059669' : '#dc2626' }}>
+                  Continue →
+                </button>
+              </div>
+
+              {showReflection && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, zIndex: 100 }} onClick={nextScenario}>
+                  <div style={{ background: 'white', borderRadius: 20, padding: 32, maxWidth: 450, width: '100%', textAlign: 'center' }}>
+                    <h3 style={{ fontFamily: "'Fredoka One', cursive", fontSize: '1.3rem', color: '#6366f1', marginBottom: 12 }}>🤔 Quick Reflection</h3>
+                    <p style={{ color: '#334155', marginBottom: 16, lineHeight: 1.5 }}>
+                      {selectedChoice.points > 0
+                        ? "What made this choice helpful in this situation?"
+                        : "What might have been a better approach here?"
+                      }
+                    </p>
+                    <button onClick={nextScenario} style={{ width: '100%', padding: 14, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', border: 'none', borderRadius: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                      I've Reflected - Continue
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {gameState === 'complete' && (
+            <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)', padding: '20px' }}>
+              <div className="card">
+                <div style={{ fontSize: '4rem', textAlign: 'center', marginBottom: 10 }}>🏆</div>
+                <h1 style={{ fontFamily: "'Fredoka One', cursive", fontSize: '1.8rem', color: '#1e293b', textAlign: 'center', marginBottom: 8 }}>Day Complete!</h1>
+                <div style={{ display: 'block', margin: '0 auto 10px', padding: '8px 20px', borderRadius: 20, fontWeight: 800, color: 'white', textAlign: 'center', width: 'fit-content', background: getScoreLevel().color }}>
+                  {getScoreLevel().level}
+                </div>
+                <p style={{ color: '#64748b', textAlign: 'center', marginBottom: 20 }}>{getScoreLevel().msg}</p>
+
+                {characterStrength && (
+                  <div style={{ background: '#eef2ff', borderRadius: 12, padding: 16, marginBottom: 16, border: '2px solid #6366f1' }}>
+                    <div style={{ textAlign: 'center', marginBottom: 8, fontSize: '2rem' }}>
+                      {characterStrengths.find(s => s.id === characterStrength)?.emoji}
+                    </div>
+                    <div style={{ textAlign: 'center', fontWeight: 700, color: '#4338ca', marginBottom: 6 }}>
+                      Your {characterStrengths.find(s => s.id === characterStrength)?.name} strength helped guide you!
+                    </div>
+                    <div style={{ textAlign: 'center', fontSize: '0.85rem', color: '#6366f1' }}>
+                      {backstoryAnswers.calmActivity && `Remember, ${backstoryAnswers.calmActivity.toLowerCase()} helps you stay calm.`}
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ background: '#f8fafc', borderRadius: 16, padding: 20, textAlign: 'center', marginBottom: 20 }}>
+                  <div style={{ fontFamily: "'Fredoka One', cursive", fontSize: '3rem', color: '#6366f1' }}>{score}</div>
+                  <div style={{ color: '#64748b', fontSize: '0.9rem' }}>out of {scenarioCount * 3} possible points</div>
+                </div>
+
+                <button onClick={() => setGameState('start')} className="start-btn">
+                  Play Again 🔄
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Render the app
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<SELAdventure />);
+  </script>
+</body>
+</html>
