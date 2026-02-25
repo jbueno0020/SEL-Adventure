@@ -499,7 +499,7 @@ const selectScenariosForDay = (scenarios, count) => {
   return selected.sort((a, b) => a.timeOrder - b.timeOrder).slice(0, count);
 };
 
-const getStressModifiedScenario = (scenario, stress, wellbeing) => {
+const getStressModifiedScenario = (scenario, stress, calm, flags = []) => {
   const s = { ...scenario };
   if (stress >= 6) {
     s.stressModifier = { active: true, prefix: "You're already feeling on edge. ", effect: "Your stress is high, making this harder." };
@@ -509,8 +509,8 @@ const getStressModifiedScenario = (scenario, stress, wellbeing) => {
     s.stressModifier = { active: true, prefix: "Everything feels overwhelming right now. ", effect: "Your stress is very high. Hard to think clearly." };
     s.situation = s.stressModifier.prefix + s.situation;
   }
-  if (wellbeing >= 7 && stress < 6) {
-    s.wellbeingModifier = { active: true, prefix: "Things have been going well lately. ", effect: "Your positive momentum helps you handle this." };
+  if (calm >= 7 && stress < 6) {
+    s.wellbeingModifier = { active: true, prefix: "Things have been going well lately. ", effect: "Your calm energy helps you handle this." };
     s.situation = s.wellbeingModifier.prefix + s.situation;
   }
   return s;
@@ -520,22 +520,22 @@ const getModifiedConsequence = (choice, stress) => {
   let consequence = choice.consequence;
   let bonusPoints = 0;
   let stressChange = 0;
-  let wellbeingChange = 0;
-  
+  let calmChange = 0;
+
   if (choice.points === 2) {
-    stressChange = -2; wellbeingChange = 2;
+    stressChange = -2; calmChange = 2;
     if (stress >= 6) { consequence += " Despite your stress, you handled this really well."; bonusPoints = 1; }
   } else if (choice.points === 1) {
-    stressChange = -1; wellbeingChange = 1;
+    stressChange = -1; calmChange = 1;
   } else if (choice.points === -1) {
-    stressChange = 2; wellbeingChange = -1;
+    stressChange = 2; calmChange = -1;
     if (stress >= 6) consequence += " Being stressed made this harder.";
   } else if (choice.points === -2) {
-    stressChange = 3; wellbeingChange = -2;
+    stressChange = 3; calmChange = -2;
     if (stress >= 6) consequence += " Your built-up stress made this blow up even more.";
   }
-  
-  return { consequence, bonusPoints, stressChange, wellbeingChange };
+
+  return { consequence, bonusPoints, stressChange, calmChange };
 };
 
 // ========== CHARACTER STRENGTHS DATA ==========
@@ -585,6 +585,67 @@ const characterStrengths = [
   }
 ];
 
+// ========== DAY FLAGS SYSTEM ==========
+
+const getCarryForwardMessages = (scenario, flags) => {
+  const msgs = [];
+  if (!flags || !flags.length || scenario.timeOrder <= 1) return msgs;
+
+  if (flags.includes('rough_start') && scenario.timeOrder >= 2) {
+    msgs.push({ text: "You're still carrying some stress from this morning...", icon: '😟', type: 'warning' });
+  }
+  if (flags.includes('good_start') && scenario.timeOrder >= 2) {
+    msgs.push({ text: "Your great morning start is giving you extra confidence!", icon: '⭐', type: 'boost' });
+  }
+  if (flags.includes('bus_trouble') && scenario.timeOrder >= 3) {
+    msgs.push({ text: "That rough ride is still bugging you a little...", icon: '😤', type: 'warning' });
+  }
+  if (flags.includes('bus_win') && !flags.includes('bus_trouble') && scenario.timeOrder >= 3) {
+    msgs.push({ text: "You felt great after that smooth start to the day!", icon: '😊', type: 'boost' });
+  }
+  if (flags.includes('social_win') && scenario.timeOrder >= 5) {
+    msgs.push({ text: "That positive connection earlier is still boosting your mood!", icon: '✨', type: 'boost' });
+  }
+  if (flags.includes('class_struggle') && scenario.timeOrder >= 7) {
+    msgs.push({ text: "Classes have been rough today — you're feeling the pressure...", icon: '😓', type: 'warning' });
+  }
+  const badFlags = flags.filter(f => ['rough_start', 'bus_trouble', 'class_struggle', 'social_struggle'].includes(f));
+  if (badFlags.length >= 2 && scenario.timeOrder >= 5) {
+    msgs.push({ text: "It's been a tough day. Keep going — you've got this!", icon: '💙', type: 'encourage' });
+  }
+
+  return msgs;
+};
+
+const buildNewFlags = (choice, scenario, currentFlags) => {
+  const newFlags = [...currentFlags];
+  const isGood = choice.points >= 1;
+  const isBad = choice.points <= -1;
+
+  if (scenario.timeOrder <= 1) {
+    if (isGood && !newFlags.includes('good_start')) newFlags.push('good_start');
+    if (isBad && !newFlags.includes('rough_start')) newFlags.push('rough_start');
+  }
+
+  if (scenario.timeOfDay?.toLowerCase().includes('bus') || scenario.timeOrder === 2) {
+    if (isGood && !newFlags.includes('bus_win')) newFlags.push('bus_win');
+    if (isBad && !newFlags.includes('bus_trouble')) newFlags.push('bus_trouble');
+  }
+
+  if (scenario.timeOrder >= 3 && scenario.timeOrder <= 6) {
+    if (isGood && !newFlags.includes('class_win')) newFlags.push('class_win');
+    if (isBad && !newFlags.includes('class_struggle')) newFlags.push('class_struggle');
+  }
+
+  const socialKeywords = ['Collaboration', 'Social Problem', 'Active Inclusion', 'Cooperation', 'Peacemaking', 'Active Protection', 'Inclusive'];
+  if (socialKeywords.some(kw => choice.skill?.includes(kw.split(' ')[0]))) {
+    if (isGood && !newFlags.includes('social_win')) newFlags.push('social_win');
+    if (isBad && !newFlags.includes('social_struggle')) newFlags.push('social_struggle');
+  }
+
+  return newFlags;
+};
+
 // ========== MAIN COMPONENT ==========
 
 export default function SELAdventure() {
@@ -601,9 +662,11 @@ export default function SELAdventure() {
   const [avatarColor, setAvatarColor] = useState('#6366f1');
   const [showReflection, setShowReflection] = useState(false);
   const [scenarioCount, setScenarioCount] = useState(7);
-  const [stress, setStress] = useState(3);
-  const [wellbeing, setWellbeing] = useState(5);
-  const [stressHistory, setStressHistory] = useState([3]);
+  const [stress, setStress] = useState(2);
+  const [calm, setCalm] = useState(5);
+  const [stressHistory, setStressHistory] = useState([2]);
+  const [dayFlags, setDayFlags] = useState([]);
+  const [lastMeterChange, setLastMeterChange] = useState(null);
 
   // Character development states
   const [characterStrength, setCharacterStrength] = useState(null);
@@ -635,21 +698,27 @@ export default function SELAdventure() {
     setCurrentIndex(0);
     setScore(0);
     setResponses([]);
-    setStress(3);
-    setWellbeing(5);
-    setStressHistory([3]);
+    setStress(2);
+    setCalm(5);
+    setStressHistory([2]);
+    setDayFlags([]);
+    setLastMeterChange(null);
     setGameState('playing');
   };
 
   const handleChoice = (choice) => {
     const mod = getModifiedConsequence(choice, stress);
     const newStress = Math.max(0, Math.min(12, stress + mod.stressChange));
-    const newWellbeing = Math.max(0, Math.min(10, wellbeing + mod.wellbeingChange));
-    
+    const newCalm = Math.max(0, Math.min(10, calm + mod.calmChange));
+
     setStress(newStress);
-    setWellbeing(newWellbeing);
+    setCalm(newCalm);
     setStressHistory(prev => [...prev, newStress]);
-    
+    setLastMeterChange({ stress: mod.stressChange, calm: mod.calmChange });
+
+    const newFlags = buildNewFlags(choice, scenarios[currentIndex], dayFlags);
+    setDayFlags(newFlags);
+
     const total = choice.points + mod.bonusPoints;
     setSelectedChoice(choice);
     setModifiedConsequence(mod);
@@ -659,7 +728,8 @@ export default function SELAdventure() {
       timeOfDay: scenarios[currentIndex].timeOfDay,
       skill: choice.skill,
       points: total,
-      stressAfter: newStress
+      stressAfter: newStress,
+      calmAfter: newCalm
     }]);
     setGameState('consequence');
   };
@@ -670,6 +740,7 @@ export default function SELAdventure() {
       setCurrentIndex(prev => prev + 1);
       setSelectedChoice(null);
       setModifiedConsequence(null);
+      setLastMeterChange(null);
       setGameState('playing');
     } else {
       setGameState('complete');
@@ -677,30 +748,48 @@ export default function SELAdventure() {
   };
 
   const getStressColor = (l) => l <= 3 ? '#10b981' : l <= 6 ? '#f59e0b' : l <= 9 ? '#f97316' : '#ef4444';
-  const getWellbeingColor = (l) => l >= 7 ? '#10b981' : l >= 4 ? '#f59e0b' : '#ef4444';
   const getStressLabel = (l) => l <= 3 ? 'Calm' : l <= 6 ? 'Moderate' : l <= 9 ? 'High' : 'Overwhelmed';
-  const getWellbeingLabel = (l) => l >= 7 ? 'Thriving' : l >= 4 ? 'Managing' : 'Struggling';
+  const getStressFace = (l) => l <= 2 ? '😌' : l <= 4 ? '😐' : l <= 6 ? '😟' : l <= 9 ? '😤' : '😡';
+  const getCalmColor = (l) => l >= 7 ? '#10b981' : l >= 4 ? '#f59e0b' : '#ef4444';
+  const getCalmLabel = (l) => l >= 8 ? 'Happy!' : l >= 6 ? 'Good' : l >= 4 ? 'Okay' : l >= 2 ? 'Low' : 'Struggling';
+  const getCalmFace = (l) => l >= 8 ? '😄' : l >= 6 ? '😊' : l >= 4 ? '🙂' : l >= 2 ? '😕' : '😢';
+
+  const getDayTimeline = () => {
+    if (!scenarios.length) return [];
+    const uniqueOrders = [...new Set(scenarios.map(s => s.timeOrder))].sort((a, b) => a - b);
+    return uniqueOrders.map(order => {
+      const s = scenarios.find(sc => sc.timeOrder === order);
+      const emojiMatch = s?.timeOfDay?.match(/\p{Emoji_Presentation}/gu);
+      const emoji = emojiMatch?.[0] || '⏰';
+      const isDone = responses.some(r => {
+        const rs = scenarios.find(sc => sc.title === r.scenario);
+        return rs?.timeOrder === order;
+      });
+      const isCurrent = scenarios[currentIndex]?.timeOrder === order;
+      return { order, emoji, done: isDone, current: isCurrent };
+    });
+  };
 
   const getCharacterExpression = () => {
     if (stress >= 9) return { mouth: '😰', eyes: '😖', face: 'overwhelmed' };
     if (stress >= 6) return { mouth: '😟', eyes: '😕', face: 'stressed' };
-    if (wellbeing >= 7) return { mouth: '😊', eyes: '😄', face: 'happy' };
-    if (wellbeing < 4) return { mouth: '😔', eyes: '😢', face: 'sad' };
+    if (calm >= 7 && stress < 6) return { mouth: '😊', eyes: '😄', face: 'happy' };
+    if (calm < 4) return { mouth: '😔', eyes: '😢', face: 'sad' };
     return { mouth: '🙂', eyes: '😐', face: 'neutral' };
   };
 
   const getInnerThought = () => {
-    if (stress >= 9 && wellbeing < 4) {
+    if (stress >= 9 && calm < 4) {
       return "Everything feels like too much right now...";
     } else if (stress >= 9) {
       return "I'm feeling really overwhelmed...";
-    } else if (stress >= 6 && wellbeing >= 7) {
+    } else if (stress >= 6 && calm >= 7) {
       return "I'm stressed but I can handle this.";
     } else if (stress >= 6) {
       return "Things are getting harder to manage...";
-    } else if (wellbeing >= 7) {
+    } else if (calm >= 7) {
       return "I'm feeling good about how things are going!";
-    } else if (wellbeing < 4) {
+    } else if (calm < 4) {
       return "I wish I could do better...";
     } else {
       return "Taking it one step at a time.";
@@ -716,7 +805,8 @@ export default function SELAdventure() {
     return { level: "Beginning Adventurer", color: "#f43f5e", msg: "Keep practicing! Every challenge is a chance to learn." };
   };
 
-  const currentScenario = scenarios[currentIndex] ? getStressModifiedScenario(scenarios[currentIndex], stress, wellbeing) : null;
+  const currentScenario = scenarios[currentIndex] ? getStressModifiedScenario(scenarios[currentIndex], stress, calm, dayFlags) : null;
+  const carryForwardMsgs = currentScenario ? getCarryForwardMessages(currentScenario, dayFlags) : [];
   const levelColor = gradeLevels.find(l => l.id === gradeLevel)?.color || '#6366f1';
 
   // STYLES
@@ -834,6 +924,44 @@ export default function SELAdventure() {
     @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     .hint-text { color: #92400e; font-weight: 600; font-size: 0.9rem; }
     .backstory-question { font-weight: 700; color: #334155; margin-bottom: 8px; font-size: 0.95rem; }
+    /* ===== GAME-STYLE METERS ===== */
+    .game-meters { display: flex; gap: 12px; padding: 16px; background: rgba(0,0,0,0.25); border-radius: 20px; margin-bottom: 14px; backdrop-filter: blur(10px); }
+    .game-meter { flex: 1; background: rgba(255,255,255,0.1); border-radius: 16px; padding: 14px; }
+    .calm-meter { border: 2px solid rgba(52,211,153,0.5); }
+    .stress-meter { border: 2px solid rgba(239,68,68,0.5); }
+    .meter-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .meter-face-icon { font-size: 2rem; line-height: 1; flex-shrink: 0; }
+    .meter-meta { flex: 1; min-width: 0; }
+    .meter-name { font-weight: 900; font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.7); margin-bottom: 2px; }
+    .meter-status-label { font-size: 0.85rem; font-weight: 800; color: white; }
+    .meter-bar-outer { height: 20px; background: rgba(0,0,0,0.35); border-radius: 10px; overflow: hidden; }
+    .meter-bar-inner { height: 100%; border-radius: 10px; transition: width 0.5s cubic-bezier(0.34,1.56,0.64,1); position: relative; }
+    .calm-bar { background: linear-gradient(90deg, #6ee7b7, #34d399, #10b981); }
+    .stress-bar { background: linear-gradient(90deg, #fde68a, #fb923c, #ef4444); }
+    .meter-bar-inner::after { content:''; position:absolute; top:0; left:0; right:0; height:45%; background:rgba(255,255,255,0.2); border-radius:10px; }
+    /* ===== SCHOOL DAY TIMELINE ===== */
+    .day-timeline { display: flex; align-items: center; padding: 10px 16px; background: rgba(255,255,255,0.08); border-radius: 14px; margin-bottom: 14px; overflow-x: auto; scrollbar-width: none; }
+    .day-timeline::-webkit-scrollbar { display: none; }
+    .t-dot { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; transition: all 0.3s; }
+    .t-dot.done { background: #10b981; }
+    .t-dot.current { background: white; box-shadow: 0 0 0 4px rgba(255,255,255,0.3); animation: tPulse 1.5s infinite; }
+    .t-dot.future { background: rgba(255,255,255,0.15); filter: grayscale(60%); }
+    .t-line { height: 3px; flex: 1; min-width: 10px; max-width: 36px; border-radius: 2px; }
+    .t-line.done { background: #10b981; }
+    .t-line.future { background: rgba(255,255,255,0.15); }
+    @keyframes tPulse { 0%,100% { box-shadow: 0 0 0 4px rgba(255,255,255,0.3); } 50% { box-shadow: 0 0 0 8px rgba(255,255,255,0.1); } }
+    /* ===== CARRY-FORWARD BANNERS ===== */
+    .carry-banner { padding: 10px 14px; border-radius: 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 0.88rem; animation: carryIn 0.4s ease; }
+    .carry-warning { background: #fef3c7; border-left: 4px solid #f59e0b; color: #92400e; }
+    .carry-boost { background: #d1fae5; border-left: 4px solid #10b981; color: #065f46; }
+    .carry-encourage { background: #dbeafe; border-left: 4px solid #3b82f6; color: #1e40af; }
+    @keyframes carryIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
+    /* ===== BIG METER CHANGES (consequence screen) ===== */
+    .big-meter-changes { display: flex; gap: 12px; margin: 20px 0; }
+    .big-change-box { flex: 1; padding: 16px 12px; border-radius: 16px; text-align: center; }
+    .big-change-face { font-size: 1.8rem; margin-bottom: 4px; line-height: 1; }
+    .big-change-amount { font-family: 'Fredoka One', cursive; font-size: 2.4rem; font-weight: 900; line-height: 1; }
+    .big-change-label { font-size: 0.8rem; font-weight: 700; margin-top: 6px; }
   `;
 
   // ========== RENDER ==========
@@ -997,23 +1125,42 @@ export default function SELAdventure() {
             </div>
           </div>
           
-          <div className="meters">
-            <div className="meter">
-              <div className="meter-header">
-                <span className="meter-label">😰 Stress</span>
-                <span className="meter-value" style={{ background: getStressColor(stress) }}>{getStressLabel(stress)}</span>
+          {/* School Day Timeline */}
+          <div className="day-timeline">
+            {getDayTimeline().map((step, i, arr) => (
+              <React.Fragment key={step.order}>
+                {i > 0 && <div className={`t-line ${arr[i-1].done ? 'done' : 'future'}`} />}
+                <div className={`t-dot ${step.done ? 'done' : step.current ? 'current' : 'future'}`}>
+                  {step.emoji}
+                </div>
+              </React.Fragment>
+            ))}
+          </div>
+
+          {/* Game-Style Meters */}
+          <div className="game-meters">
+            <div className="game-meter calm-meter">
+              <div className="meter-top">
+                <span className="meter-face-icon">{getCalmFace(calm)}</span>
+                <div className="meter-meta">
+                  <div className="meter-name">Calm</div>
+                  <div className="meter-status-label">{getCalmLabel(calm)}</div>
+                </div>
               </div>
-              <div className="meter-track">
-                <div className="meter-fill" style={{ width: `${(stress/12)*100}%`, background: getStressColor(stress) }} />
+              <div className="meter-bar-outer">
+                <div className="meter-bar-inner calm-bar" style={{ width: `${(calm/10)*100}%` }} />
               </div>
             </div>
-            <div className="meter">
-              <div className="meter-header">
-                <span className="meter-label">💪 Wellbeing</span>
-                <span className="meter-value" style={{ background: getWellbeingColor(wellbeing) }}>{getWellbeingLabel(wellbeing)}</span>
+            <div className="game-meter stress-meter">
+              <div className="meter-top">
+                <span className="meter-face-icon">{getStressFace(stress)}</span>
+                <div className="meter-meta">
+                  <div className="meter-name">Stress</div>
+                  <div className="meter-status-label">{getStressLabel(stress)}</div>
+                </div>
               </div>
-              <div className="meter-track">
-                <div className="meter-fill" style={{ width: `${(wellbeing/10)*100}%`, background: getWellbeingColor(wellbeing) }} />
+              <div className="meter-bar-outer">
+                <div className="meter-bar-inner stress-bar" style={{ width: `${(stress/12)*100}%` }} />
               </div>
             </div>
           </div>
@@ -1045,7 +1192,15 @@ export default function SELAdventure() {
                 <span>{currentScenario.wellbeingModifier.effect}</span>
               </div>
             )}
-            
+
+            {/* Carry-forward consequence banners */}
+            {carryForwardMsgs.map((msg, i) => (
+              <div key={i} className={`carry-banner carry-${msg.type}`}>
+                <span style={{ fontSize: '1.3rem' }}>{msg.icon}</span>
+                <span>{msg.text}</span>
+              </div>
+            ))}
+
             <div className="scenario-header">
               <div className="scenario-num" style={{ background: levelColor }}>{currentIndex + 1}</div>
               <div>
@@ -1115,14 +1270,20 @@ export default function SELAdventure() {
           </div>
           <p className="consequence-text">{modifiedConsequence.consequence}</p>
           
-          <div className="meter-changes">
-            <div className="meter-change" style={{ background: modifiedConsequence.stressChange <= 0 ? '#d1fae5' : '#fee2e2', color: modifiedConsequence.stressChange <= 0 ? '#065f46' : '#991b1b' }}>
-              <div className="meter-change-label">😰 Stress</div>
-              <div className="meter-change-value">{modifiedConsequence.stressChange > 0 ? '+' : ''}{modifiedConsequence.stressChange}</div>
+          <div className="big-meter-changes">
+            <div className="big-change-box" style={{ background: modifiedConsequence.calmChange >= 0 ? '#d1fae5' : '#fee2e2' }}>
+              <div className="big-change-face">{getCalmFace(calm)}</div>
+              <div className="big-change-amount" style={{ color: modifiedConsequence.calmChange >= 0 ? '#059669' : '#dc2626' }}>
+                {modifiedConsequence.calmChange > 0 ? '+' : ''}{modifiedConsequence.calmChange}
+              </div>
+              <div className="big-change-label" style={{ color: modifiedConsequence.calmChange >= 0 ? '#065f46' : '#991b1b' }}>😊 Calm</div>
             </div>
-            <div className="meter-change" style={{ background: modifiedConsequence.wellbeingChange >= 0 ? '#d1fae5' : '#fee2e2', color: modifiedConsequence.wellbeingChange >= 0 ? '#065f46' : '#991b1b' }}>
-              <div className="meter-change-label">💪 Wellbeing</div>
-              <div className="meter-change-value">{modifiedConsequence.wellbeingChange > 0 ? '+' : ''}{modifiedConsequence.wellbeingChange}</div>
+            <div className="big-change-box" style={{ background: modifiedConsequence.stressChange <= 0 ? '#d1fae5' : '#fee2e2' }}>
+              <div className="big-change-face">{getStressFace(stress)}</div>
+              <div className="big-change-amount" style={{ color: modifiedConsequence.stressChange <= 0 ? '#059669' : '#dc2626' }}>
+                {modifiedConsequence.stressChange > 0 ? '+' : ''}{modifiedConsequence.stressChange}
+              </div>
+              <div className="big-change-label" style={{ color: modifiedConsequence.stressChange <= 0 ? '#065f46' : '#991b1b' }}>😤 Stress</div>
             </div>
           </div>
           
@@ -1198,23 +1359,23 @@ export default function SELAdventure() {
           </div>
           
           <div className="journey-box">
-            <div className="journey-title">📊 Your Stress Journey</div>
+            <div className="journey-title">📊 How Your Day Went</div>
             <div className="journey-stats">
               <div className="journey-stat">
-                <div className="journey-stat-value">{avgStress.toFixed(1)}</div>
-                <div className="journey-stat-label">Avg Stress</div>
+                <div className="journey-stat-value">😊 {responses.length > 0 ? responses[responses.length-1].calmAfter ?? '—' : calm}</div>
+                <div className="journey-stat-label">Final Calm</div>
               </div>
               <div className="journey-stat">
-                <div className="journey-stat-value">{peakStress}</div>
+                <div className="journey-stat-value">😤 {peakStress}</div>
                 <div className="journey-stat-label">Peak Stress</div>
               </div>
               <div className="journey-stat">
-                <div className="journey-stat-value">{endStress}</div>
+                <div className="journey-stat-value">😌 {endStress}</div>
                 <div className="journey-stat-label">Final Stress</div>
               </div>
             </div>
             <div className="journey-insight">
-              {endStress <= 3 
+              {endStress <= 3
                 ? "🌟 You finished with low stress! Your coping choices kept you balanced."
                 : endStress <= 6
                 ? "👍 You managed stress reasonably well through the day."
@@ -1232,7 +1393,7 @@ export default function SELAdventure() {
                 </span>
                 <div className="response-scenario">{r.timeOfDay} {r.scenario}</div>
                 <div className="response-skill">{r.skill}</div>
-                <div className="response-stress">Stress after: {r.stressAfter}</div>
+                <div className="response-stress">😤 Stress: {r.stressAfter} &nbsp;|&nbsp; 😊 Calm: {r.calmAfter ?? '—'}</div>
               </div>
             ))}
           </div>
