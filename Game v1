@@ -334,7 +334,7 @@ const highSchoolScenarios = [
     ]
   },
   {
-    id: 'h3', title: "The Hallway Call-Out", timeOfDay: "🏫 Arrival", timeOrder: 2,
+    id: 'h3', title: "The Hallway Call-Out", timeOfDay: "🏫 Arrival", timeOrder: 2, isTricky: true,
     situation: "Walking into school, you cross paths with Marcus — from your rival team — who's here for a joint athletic meeting. He spots you in front of a crowd and says loudly: 'Hope your game shows up tonight. Last time was embarrassing for you.'",
     choices: [
       { text: "'Game's tonight. I'll let my play talk.' Keep walking.", points: 2, skill: "Composed Confidence", consequence: "The crowd goes quiet — in a good way. Marcus looks annoyed he didn't get a reaction. You've already moved on. He hasn't.", emoji: "💚" },
@@ -364,7 +364,7 @@ const highSchoolScenarios = [
     ]
   },
   {
-    id: 'h6', title: "The Locker Room Offer", timeOfDay: "🏃 Pre-Practice", timeOrder: 5,
+    id: 'h6', title: "The Locker Room Offer", timeOfDay: "🏃 Pre-Practice", timeOrder: 5, isTricky: true,
     situation: "Before warm-ups, Tyler pulls you aside in the locker room. 'Take the edge off before the game, bro. Everyone does it.' He holds out a small pill. You have no idea what it is. The game is in four hours.",
     choices: [
       { text: "'Nah, I'm good. I need my head clear tonight.' Walk straight to the gym.", points: 2, skill: "Confident Refusal", consequence: "Tyler shrugs. You feel clear-headed going into warm-ups. Coach Reyes pulls you aside: 'You look focused today.' You are.", emoji: "💚" },
@@ -424,7 +424,7 @@ const highSchoolScenarios = [
     ]
   },
   {
-    id: 'h12', title: "Before the Game", timeOfDay: "🏫 After School", timeOrder: 10,
+    id: 'h12', title: "Before the Game", timeOfDay: "🏫 After School", timeOrder: 10, isTricky: true,
     situation: "Two hours before tip-off, your partner texts: 'You missed my performance AGAIN last weekend and now you won't even talk about it. We need to talk RIGHT NOW.' You care about them. But you also need to focus. Tonight matters.",
     choices: [
       { text: "'I hear you and I want to talk — not in a text. Can we connect right after the game? This conversation deserves my full attention.'", points: 2, skill: "Assertive Boundary + Emotional Care", consequence: "They're hurt but they respect it. After the game, you actually have the conversation — with space and honesty. You don't lose either the game or the relationship.", emoji: "💚" },
@@ -540,6 +540,124 @@ const getModifiedConsequence = (choice, stress) => {
   }
 
   return { consequence, bonusPoints, stressChange, calmChange };
+};
+
+// ========== BADGES ==========
+
+const BADGES = [
+  {
+    id: 'hot_streak',
+    emoji: '🔥',
+    name: 'On Fire',
+    desc: '3 great choices in a row',
+    check: (r, streak) => streak >= 3
+  },
+  {
+    id: 'brave_heart',
+    emoji: '🦁',
+    name: 'Brave Heart',
+    desc: 'Chose integrity or courage when it was hard',
+    check: (r) => r.some(x => x.points > 0 && [
+      'Confident Refusal', 'Academic Integrity', 'Integrity', 'Moral Courage',
+      'Principled Boundary', 'Accountable', 'Honesty', 'Composed Confidence'
+    ].some(s => x.skill?.includes(s)))
+  },
+  {
+    id: 'got_your_back',
+    emoji: '🤝',
+    name: 'Got Your Back',
+    desc: 'Went out of your way to support someone else',
+    check: (r) => r.some(x => x.points > 0 && [
+      'Active Empathy', 'Active Protection', 'Active Inclusion',
+      'Crisis Response', 'Proactive Support', 'Collaborative Responsibility'
+    ].some(s => x.skill?.includes(s)))
+  },
+  {
+    id: 'cool_head',
+    emoji: '🧊',
+    name: 'Cool Head',
+    desc: 'Made a strong choice when stress was high',
+    check: (r) => r.some(x => x.points > 0 && (x.stressBefore ?? 0) >= 6)
+  },
+  {
+    id: 'bounce_back',
+    emoji: '⬆️',
+    name: 'Bounce Back',
+    desc: 'Recovered with a great choice after a tough one',
+    check: (r) => { for (let i = 1; i < r.length; i++) if (r[i-1].points < 0 && r[i].points > 0) return true; return false; }
+  },
+  {
+    id: 'all_star',
+    emoji: '⭐',
+    name: 'All Star',
+    desc: 'Positive choices on 75%+ of scenarios',
+    check: (r) => r.length >= 3 && r.filter(x => x.points > 0).length / r.length >= 0.75
+  },
+  {
+    id: 'voice',
+    emoji: '💬',
+    name: 'Speaks Up',
+    desc: 'Used clear communication when it really counted',
+    check: (r) => r.filter(x => x.points > 0 && (
+      x.skill?.toLowerCase().includes('communicat') ||
+      x.skill?.toLowerCase().includes('asserti') ||
+      x.skill?.toLowerCase().includes('advocacy') ||
+      x.skill?.toLowerCase().includes('expressing')
+    )).length >= 2
+  }
+];
+
+// ========== DISCUSSION PROMPTS ==========
+
+const DISCUSSION_PROMPTS = {
+  // Elementary
+  'e1':  "What are some ways people respond when they don't get what they want? What makes flexibility hard — and why does it matter?",
+  'e2':  "When you're panicking, what happens in your body? What helps you slow down and think more clearly?",
+  'e3':  "Have you ever felt like something 'belonged' to you that wasn't really yours? How do we share space with others?",
+  'e4':  "What gets in the way of asking for help when you're confused? Why might asking actually help other people in the room too?",
+  'e5':  "When someone in a group acts like they're in charge, what are different ways to respond? What does real teamwork actually look like?",
+  'e6':  "What does it feel like to be left out? What options do we have when something we wanted isn't available to us?",
+  'e7':  "Think of a time something embarrassing happened in front of others. What made it better or worse? How does laughing at yourself change things?",
+  'e8':  "When you see someone who's really good at something you struggle with, what do you feel? What's the difference between giving up and growing?",
+  'e9':  "What's the difference between being aggressive, passive, and assertive? Can you give an example of each from real life?",
+  'e10': "Why is it sometimes hard to admit a mistake — especially when no one saw? What changes in a relationship when someone is honest?",
+  'e11': "What do you say to yourself when something is physically hard? How does self-talk actually affect performance?",
+  'e12': "When a friend hurts your feelings, what's the difference between expressing it and taking it out on them?",
+  'e13': "Why do we sometimes avoid things we don't want to do? What usually happens when we keep putting something off?",
+  'e14': "Think about a conflict at home. What responses tend to make it better? What tends to make it escalate?",
+  'e15': "What kinds of worries keep you up at night? What's actually helped you feel calmer — and what made things worse?",
+  // Middle School
+  'm1':  "How does social media change the way we experience being left out? What's different about how it feels online vs. in person?",
+  'm2':  "Why do we sometimes tie how we feel about ourselves to what we look like or wear? When does that become a real problem?",
+  'm3':  "What does frustration feel like in your body? What strategies actually help — and what makes frustration worse?",
+  'm4':  "What pressures push students toward cheating? Is the real cost the grade, the anxiety, or something else?",
+  'm5':  "What assumptions do we make about people before we know them? How does prejudging others hurt everyone in the situation?",
+  'm6':  "Why is it so hard to speak up when friends say something unkind? What does it cost us — and others — when we stay silent?",
+  'm7':  "What do you usually do when you're embarrassed in front of others? What does healthy resilience look like after public mistakes?",
+  'm8':  "What's the difference between noticing someone lonely and actually doing something about it? What gets in the way?",
+  'm9':  "How do we handle disappointing results when our peers succeed and we don't? What's the line between healthy motivation and jealousy?",
+  'm10': "Why does online conflict feel more urgent and intense than in-person conflict? What are the real consequences of reacting impulsively in a group chat?",
+  'm11': "What does it feel like in your body when you're overwhelmed? What's the difference between expressing stress constructively and destructively?",
+  'm12': "What makes bystanders so powerful — both when they do nothing AND when they act? What stops people from stepping in?",
+  'm13': "What patterns lead to conflict about phone use at home? What negotiation skills could change the outcome?",
+  'm14': "When we're stressed, why do our closest relationships often get the silent treatment? How does avoiding hard conversations make things worse?",
+  'm15': "What is rumination, and why does our brain get stuck in it? What research-backed strategies actually help interrupt the cycle?",
+  // High School
+  'h1':  "What does it look like when high-stakes pressure meets poor preparation? How does avoidance in these moments affect both performance and trust?",
+  'h2':  "How do we process rejection when a lot of our identity is tied to an outcome? What does healthy processing look like vs. letting it spiral?",
+  'h3':  "Why do public call-outs trigger such strong reactions? What does it actually mean to 'win' when someone is trying to provoke you? Is there more than one right answer here?",
+  'h4':  "What pressures push students toward academic dishonesty? Is the real cost the grade, the anxiety during it, or something else entirely?",
+  'h5':  "What does real self-advocacy look like in an academic setting — especially when you're clearly in the wrong?",
+  'h6':  "What makes it hard to say no in peer situations? What does confident refusal actually look like? Is there more than one valid way to refuse here?",
+  'h7':  "How does digital conflict change group dynamics? What does leadership look like in a group chat vs. in person?",
+  'h8':  "How do we respond when something we've worked hard for gets taken away? What's the difference between accountability and unfair treatment?",
+  'h9':  "Why is it so easy to convince ourselves 'someone else will help'? What's the real cost of small acts of kindness we talk ourselves out of?",
+  'h10': "How do family expectations shape the decisions we make for ourselves? What does it mean to make an informed decision vs. a reflexive one?",
+  'h11': "What warning signs might indicate a peer is really struggling? When does concern for a friend cross into something that requires adult involvement?",
+  'h12': "How do we balance responsibilities to multiple people simultaneously when stakes are high? All four choices here carry real costs — discuss them. Is any of them clearly wrong?",
+  'h13': "What makes bystander situations complicated — even when the right thing seems obvious? What does moral courage actually cost in social settings?",
+  'h14': "What's the difference between loyalty and complicity? Is there a way to be a loyal friend without compromising your own integrity?",
+  'h15': "What does it look like when stress becomes something bigger and darker? How do we create cultures where asking for help feels normal rather than weak?"
 };
 
 // ========== BACKSTORY CHIP DATA ==========
@@ -1111,6 +1229,10 @@ export default function SELAdventure() {
   const [showHint, setShowHint] = useState(false);
   const [reflectionText, setReflectionText] = useState('');
   const [hasSavedGame, setHasSavedGame] = useState(false);
+  const [streak, setStreak] = useState(0);
+  const [badges, setBadges] = useState([]);
+  const [newBadge, setNewBadge] = useState(null);
+  const [discussionMode, setDiscussionMode] = useState(true);
 
   const gradeLevels = [
     { id: 'elementary', name: 'Elementary School', grades: 'K-5', emoji: '🎨', color: '#10b981', data: elementaryScenarios },
@@ -1145,7 +1267,7 @@ export default function SELAdventure() {
           gameState, gradeLevel, playerName, accessories, scenarioCount,
           currentIndex, scenarios, score, responses, stress, calm,
           stressHistory, dayFlags, characterStrength, backstoryAnswers,
-          selectedChoice, modifiedConsequence
+          selectedChoice, modifiedConsequence, streak, badges
         }));
       } catch (e) {}
     } else if (gameState === 'complete') {
@@ -1187,6 +1309,8 @@ export default function SELAdventure() {
       setBackstoryAnswers(saved.backstoryAnswers || { calmActivity: '', supportPerson: '', proudMoment: '' });
       setSelectedChoice(saved.selectedChoice || null);
       setModifiedConsequence(saved.modifiedConsequence || null);
+      setStreak(saved.streak || 0);
+      setBadges(saved.badges || []);
       setHasSavedGame(false);
     } catch (e) {}
   };
@@ -1207,6 +1331,7 @@ export default function SELAdventure() {
   };
 
   const handleChoice = (choice) => {
+    const stressBefore = stress;
     const mod = getModifiedConsequence(choice, stress);
     const newStress = Math.max(0, Math.min(12, stress + mod.stressChange));
     const newCalm = Math.max(0, Math.min(10, calm + mod.calmChange));
@@ -1223,15 +1348,33 @@ export default function SELAdventure() {
     setSelectedChoice(choice);
     setModifiedConsequence(mod);
     setScore(prev => prev + total);
-    setResponses(prev => [...prev, {
+
+    // Track streak (resets on any negative choice)
+    const newStreak = choice.points > 0 ? streak + 1 : 0;
+    setStreak(newStreak);
+
+    // Build updated responses array now (can't rely on state yet)
+    const newResponse = {
       scenario: scenarios[currentIndex].title,
       timeOfDay: scenarios[currentIndex].timeOfDay,
       skill: choice.skill,
       points: total,
+      stressBefore,
       stressAfter: newStress,
       calmAfter: newCalm
-    }]);
-    setGameState('consequence');
+    };
+    const newResponses = [...responses, newResponse];
+    setResponses(newResponses);
+
+    // Check which badges are now earned
+    const prevBadgeIds = new Set(badges.map(b => b.id));
+    const nowEarned = BADGES.filter(b => b.check(newResponses, newStreak));
+    setBadges(nowEarned);
+    const newlyEarned = nowEarned.filter(b => !prevBadgeIds.has(b.id));
+    if (newlyEarned.length > 0) setNewBadge(newlyEarned[0]);
+
+    // Go to discussion pause (if enabled) or straight to consequence
+    setGameState(discussionMode ? 'discussion' : 'consequence');
   };
 
   const nextScenario = () => {
@@ -1531,6 +1674,43 @@ export default function SELAdventure() {
     .resume-text { font-weight: 700; color: #065f46; font-size: 0.9rem; }
     .resume-btn { padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; }
     .resume-btn:hover { background: #059669; }
+    /* ===== DISCUSSION MODE TOGGLE ===== */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 14px; padding: 14px 16px; margin-bottom: 18px; gap: 12px; }
+    .toggle-btn { flex-shrink: 0; padding: 8px 18px; border: none; border-radius: 20px; font-weight: 800; font-size: 0.85rem; cursor: pointer; font-family: inherit; background: #e2e8f0; color: #64748b; transition: all 0.2s; }
+    .toggle-btn.active { background: #6366f1; color: white; }
+    /* ===== STREAK ===== */
+    .streak-pill { background: rgba(251,146,60,0.18); color: #ea580c; font-weight: 800; border-radius: 20px; padding: 3px 10px; font-size: 0.78rem; margin-left: 8px; }
+    .streak-bonus { background: linear-gradient(135deg, #ea580c, #f97316); color: white; border-radius: 12px; padding: 10px 16px; text-align: center; font-weight: 800; margin-bottom: 12px; font-size: 1rem; }
+    .streak-bonus--sm { background: linear-gradient(135deg, #92400e, #b45309); font-size: 0.9rem; }
+    /* ===== TRICKY SCENARIO BANNER ===== */
+    .tricky-banner { background: linear-gradient(135deg, #fef9c3, #fde68a); border: 2px solid #f59e0b; border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; color: #78350f; font-weight: 700; font-size: 0.9rem; }
+    /* ===== DISCUSSION PAUSE SCREEN ===== */
+    .discussion-card { background: #1e293b; border-radius: 24px; padding: 32px; max-width: 600px; width: 100%; margin: 0 auto; }
+    .discussion-badge { display: inline-block; background: #dc2626; color: white; font-weight: 800; font-size: 0.8rem; border-radius: 20px; padding: 6px 16px; letter-spacing: 1px; margin-bottom: 16px; }
+    .discussion-scenario { color: white; font-size: 1.5rem; font-weight: 800; margin: 0 0 16px; }
+    .discussion-choice-made { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 14px; margin-bottom: 20px; }
+    .discussion-choice-label { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; margin-bottom: 6px; font-weight: 700; }
+    .discussion-choice-text { color: #e2e8f0; font-size: 0.95rem; line-height: 1.5; font-style: italic; }
+    .discussion-prompt-box { background: rgba(99,102,241,0.15); border: 2px solid rgba(99,102,241,0.4); border-radius: 14px; padding: 18px; margin-bottom: 20px; }
+    .discussion-prompt-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; color: #a5b4fc; font-weight: 800; margin-bottom: 8px; }
+    .discussion-prompt-text { color: #e2e8f0; font-size: 1rem; line-height: 1.65; margin: 0; }
+    .discussion-hint { display: flex; align-items: center; gap: 8px; color: #64748b; font-size: 0.82rem; margin-bottom: 20px; }
+    .discussion-reveal-btn { width: 100%; padding: 16px; color: white; border: none; border-radius: 14px; font-size: 1.1rem; font-weight: 800; cursor: pointer; font-family: inherit; transition: transform 0.2s; }
+    .discussion-reveal-btn:hover { transform: translateY(-2px); }
+    /* ===== BADGE POPUP ===== */
+    .badge-popup { position: fixed; inset: 0; background: rgba(0,0,0,0.72); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+    .badge-popup-card { background: white; border-radius: 24px; padding: 36px 28px; text-align: center; max-width: 300px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    .badge-popup-emoji { font-size: 4.5rem; margin-bottom: 12px; }
+    .badge-popup-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; color: #6366f1; font-weight: 800; margin-bottom: 8px; }
+    .badge-popup-name { font-size: 1.6rem; font-weight: 800; color: #1e293b; margin-bottom: 8px; }
+    .badge-popup-desc { color: #64748b; font-size: 0.88rem; margin-bottom: 24px; }
+    .badge-popup-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 800; cursor: pointer; font-family: inherit; }
+    /* ===== BADGE SHELF (end screen) ===== */
+    .badge-shelf { background: linear-gradient(135deg, #eef2ff, #ede9fe); border: 2px solid #a5b4fc; border-radius: 16px; padding: 20px; margin-bottom: 20px; }
+    .badge-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .badge-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .badge-item-emoji { font-size: 2rem; }
+    .badge-item-name { font-size: 0.65rem; font-weight: 700; color: #4338ca; text-align: center; line-height: 1.3; }
     /* ===== ANONYMOUS / TEACHER BUTTONS ===== */
     .anon-btn { width: 100%; padding: 12px; background: white; border: 2px dashed #94a3b8; border-radius: 12px; color: #64748b; font-size: 0.9rem; font-weight: 700; cursor: pointer; font-family: inherit; margin-bottom: 10px; }
     .anon-btn:hover { border-color: #6366f1; color: #6366f1; }
@@ -1610,6 +1790,26 @@ export default function SELAdventure() {
             ))}
           </div>
           
+          <span className="label">Facilitation Mode</span>
+          <div className="toggle-row">
+            <div>
+              <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.9rem' }}>
+                {discussionMode ? '🛑 Discussion Pauses ON' : '▶️ Individual Play Mode'}
+              </div>
+              <div style={{ color: '#64748b', fontSize: '0.78rem', marginTop: 2 }}>
+                {discussionMode
+                  ? 'Game pauses after each choice for group discussion'
+                  : 'No pauses — students play individually at their own pace'}
+              </div>
+            </div>
+            <button
+              className={`toggle-btn ${discussionMode ? 'active' : ''}`}
+              onClick={() => setDiscussionMode(prev => !prev)}
+            >
+              {discussionMode ? 'ON' : 'OFF'}
+            </button>
+          </div>
+
           <span className="label">How Many Scenarios?</span>
           <div className="count-btns">
             {[5, 7, 10].map(n => (
@@ -1864,6 +2064,7 @@ export default function SELAdventure() {
                 <AvatarFace stress={stress} calm={calm} accessories={accessories} size={42} />
               </div>
               <span className="player-name">{playerName}</span>
+              {streak >= 2 && <span className="streak-pill">🔥 {streak}</span>}
             </div>
             <div style={{ textAlign: 'right' }}>
               <div className="progress">Scenario {currentIndex + 1} of {scenarios.length}</div>
@@ -1971,6 +2172,11 @@ export default function SELAdventure() {
               </div>
             )}
 
+            {scenarios[currentIndex]?.isTricky && (
+              <div className="tricky-banner">
+                ⚡ No easy answer here — think carefully before you choose
+              </div>
+            )}
             <div className="choices-label">What do you do?</div>
             {shuffledChoices.map((choice, i) => (
               <button key={i} className="choice-btn" onClick={() => handleChoice(choice)}>
@@ -1978,6 +2184,42 @@ export default function SELAdventure() {
               </button>
             ))}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // DISCUSSION PAUSE SCREEN
+  if (gameState === 'discussion' && selectedChoice) {
+    const prompt = DISCUSSION_PROMPTS[scenarios[currentIndex]?.id];
+    const isPositive = selectedChoice.points > 0;
+    return (
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0f172a 100%)', fontFamily: "'Nunito', sans-serif", padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <style>{styles}</style>
+        <div className="discussion-card">
+          <div className="discussion-badge">🛑 Facilitator Pause</div>
+          <h2 className="discussion-scenario">{scenarios[currentIndex]?.title}</h2>
+          <div className="discussion-choice-made">
+            <span className="discussion-choice-label">Choice made:</span>
+            <span className="discussion-choice-text">"{selectedChoice.text}"</span>
+          </div>
+          {prompt && (
+            <div className="discussion-prompt-box">
+              <div className="discussion-prompt-label">💬 Ask the group:</div>
+              <p className="discussion-prompt-text">{prompt}</p>
+            </div>
+          )}
+          <div className="discussion-hint">
+            <span>🕐</span>
+            <span>Give the group time to discuss before revealing what happens next</span>
+          </div>
+          <button
+            className="discussion-reveal-btn"
+            style={{ background: isPositive ? 'linear-gradient(135deg,#059669,#10b981)' : 'linear-gradient(135deg,#b91c1c,#ef4444)' }}
+            onClick={() => setGameState('consequence')}
+          >
+            Reveal What Happens →
+          </button>
         </div>
       </div>
     );
@@ -2002,9 +2244,15 @@ export default function SELAdventure() {
       }}>
         <style>{styles}</style>
         <div className="consequence-card">
+          {streak >= 3 && isPositive && (
+            <div className="streak-bonus">🔥 {streak} in a row! On fire!</div>
+          )}
+          {streak === 2 && isPositive && (
+            <div className="streak-bonus streak-bonus--sm">🔥 2 in a row — keep it going!</div>
+          )}
           <div className="result-emoji">{selectedChoice.emoji}</div>
           <div className="points" style={{ color: isPositive ? '#059669' : '#dc2626' }}>
-            {total > 0 ? '+' : ''}{total} Points
+            {total > 0 ? '+' : ''}{total} {total === 1 ? 'Point' : 'Points'}
           </div>
           {modifiedConsequence.bonusPoints > 0 && (
             <div className="bonus">+{modifiedConsequence.bonusPoints} Resilience Bonus!</div>
@@ -2050,6 +2298,18 @@ export default function SELAdventure() {
             Continue →
           </button>
         </div>
+
+        {newBadge && (
+          <div className="badge-popup" onClick={() => setNewBadge(null)}>
+            <div className="badge-popup-card" onClick={e => e.stopPropagation()}>
+              <div className="badge-popup-emoji">{newBadge.emoji}</div>
+              <div className="badge-popup-title">Badge Unlocked!</div>
+              <div className="badge-popup-name">{newBadge.name}</div>
+              <div className="badge-popup-desc">{newBadge.desc}</div>
+              <button className="badge-popup-btn" onClick={() => setNewBadge(null)}>Awesome! →</button>
+            </div>
+          </div>
+        )}
 
         {showReflection && (
           <div className="modal">
@@ -2149,6 +2409,33 @@ export default function SELAdventure() {
               }
             </div>
           </div>
+
+          {badges.length > 0 && (
+            <div className="badge-shelf">
+              <div className="journey-title" style={{ color: '#4338ca', marginBottom: 14 }}>🏅 Badges Earned</div>
+              <div className="badge-grid">
+                {badges.map(b => (
+                  <div key={b.id} className="badge-item" title={b.desc}>
+                    <div className="badge-item-emoji">{b.emoji}</div>
+                    <div className="badge-item-name">{b.name}</div>
+                  </div>
+                ))}
+              </div>
+              {BADGES.filter(b => !badges.some(e => e.id === b.id)).length > 0 && (
+                <div style={{ marginTop: 12, borderTop: '1px solid #e2e8f0', paddingTop: 12 }}>
+                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: 8, fontWeight: 700 }}>NOT YET EARNED</div>
+                  <div className="badge-grid">
+                    {BADGES.filter(b => !badges.some(e => e.id === b.id)).map(b => (
+                      <div key={b.id} className="badge-item badge-item--locked" title={b.desc}>
+                        <div className="badge-item-emoji" style={{ filter: 'grayscale(1)', opacity: 0.35 }}>{b.emoji}</div>
+                        <div className="badge-item-name" style={{ color: '#cbd5e1' }}>{b.name}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           
           <span className="label">📋 Your Day</span>
           <div className="response-list">
