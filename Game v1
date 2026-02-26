@@ -676,6 +676,8 @@ export default function SELAdventure() {
     proudMoment: ''
   });
   const [showHint, setShowHint] = useState(false);
+  const [reflectionText, setReflectionText] = useState('');
+  const [hasSavedGame, setHasSavedGame] = useState(false);
 
   const gradeLevels = [
     { id: 'elementary', name: 'Elementary School', grades: 'K-5', emoji: '🎨', color: '#10b981', data: elementaryScenarios },
@@ -690,6 +692,73 @@ export default function SELAdventure() {
       setShuffledChoices(shuffleArray(scenarios[currentIndex].choices));
     }
   }, [currentIndex, gameState, scenarios]);
+
+  // Check for saved game on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('sel_saved_game');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && ['playing', 'consequence'].includes(parsed.gameState)) {
+          setHasSavedGame(true);
+        }
+      }
+    } catch (e) {}
+  }, []);
+
+  // Auto-save game progress & record to teacher log on complete
+  useEffect(() => {
+    if (['playing', 'consequence'].includes(gameState)) {
+      try {
+        localStorage.setItem('sel_saved_game', JSON.stringify({
+          gameState, gradeLevel, playerName, avatarColor, scenarioCount,
+          currentIndex, scenarios, score, responses, stress, calm,
+          stressHistory, dayFlags, characterStrength, backstoryAnswers,
+          selectedChoice, modifiedConsequence
+        }));
+      } catch (e) {}
+    } else if (gameState === 'complete') {
+      localStorage.removeItem('sel_saved_game');
+      try {
+        const existing = JSON.parse(localStorage.getItem('sel_teacher_data') || '[]');
+        existing.push({
+          ts: Date.now(), gradeLevel,
+          playerName: playerName || 'Anonymous',
+          score, maxScore: scenarioCount * 3, scenarioCount,
+          responses: responses.map(r => ({
+            scenario: r.scenario, skill: r.skill,
+            points: r.points, reflection: r.reflection || ''
+          }))
+        });
+        localStorage.setItem('sel_teacher_data', JSON.stringify(existing.slice(-100)));
+      } catch (e) {}
+    }
+  }, [gameState, currentIndex, score, responses]);
+
+  const resumeGame = () => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('sel_saved_game'));
+      if (!saved) return;
+      setGameState(saved.gameState);
+      setGradeLevel(saved.gradeLevel);
+      setPlayerName(saved.playerName || '');
+      setAvatarColor(saved.avatarColor || '#6366f1');
+      setScenarioCount(saved.scenarioCount || 7);
+      setCurrentIndex(saved.currentIndex || 0);
+      setScenarios(saved.scenarios || []);
+      setScore(saved.score || 0);
+      setResponses(saved.responses || []);
+      setStress(saved.stress ?? 2);
+      setCalm(saved.calm ?? 5);
+      setStressHistory(saved.stressHistory || [2]);
+      setDayFlags(saved.dayFlags || []);
+      setCharacterStrength(saved.characterStrength || null);
+      setBackstoryAnswers(saved.backstoryAnswers || { calmActivity: '', supportPerson: '', proudMoment: '' });
+      setSelectedChoice(saved.selectedChoice || null);
+      setModifiedConsequence(saved.modifiedConsequence || null);
+      setHasSavedGame(false);
+    } catch (e) {}
+  };
 
   const startGame = () => {
     const level = gradeLevels.find(l => l.id === gradeLevel);
@@ -735,6 +804,16 @@ export default function SELAdventure() {
   };
 
   const nextScenario = () => {
+    if (reflectionText.trim()) {
+      setResponses(prev => {
+        const updated = [...prev];
+        if (updated.length > 0) {
+          updated[updated.length - 1] = { ...updated[updated.length - 1], reflection: reflectionText.trim() };
+        }
+        return updated;
+      });
+    }
+    setReflectionText('');
     setShowReflection(false);
     if (currentIndex < scenarios.length - 1) {
       setCurrentIndex(prev => prev + 1);
@@ -803,6 +882,37 @@ export default function SELAdventure() {
     if (pct >= 60) return { level: "Skilled Navigator", color: "#6366f1", msg: "You made mostly helpful choices with room to grow." };
     if (pct >= 40) return { level: "Learning Explorer", color: "#f59e0b", msg: "You're learning which strategies work best." };
     return { level: "Beginning Adventurer", color: "#f43f5e", msg: "Keep practicing! Every challenge is a chance to learn." };
+  };
+
+  const isCrisisChoice = (choice) => choice && choice.points === -2 &&
+    ['Catastrophic Thinking', 'Alarming Deflection'].includes(choice.skill);
+
+  const downloadJournal = () => {
+    const lines = [
+      'SEL Adventure — My Reflection Journal',
+      `Player: ${playerName || 'Anonymous'}`,
+      `Date: ${new Date().toLocaleDateString()}`,
+      `Score: ${score} / ${scenarioCount * 3}`,
+      '',
+      '=== My Day ===',
+      ...responses.map((r, i) => [
+        `\n${i + 1}. ${r.timeOfDay} — ${r.scenario}`,
+        `   Skill: ${r.skill} (${r.points > 0 ? '+' : ''}${r.points} pts)`,
+        r.reflection ? `   My reflection: "${r.reflection}"` : ''
+      ].filter(Boolean).join('\n'))
+    ];
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sel-journal-${(playerName || 'anonymous').replace(/\s+/g, '-')}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const getTeacherData = () => {
+    try { return JSON.parse(localStorage.getItem('sel_teacher_data') || '[]'); }
+    catch (e) { return []; }
   };
 
   const currentScenario = scenarios[currentIndex] ? getStressModifiedScenario(scenarios[currentIndex], stress, calm, dayFlags) : null;
@@ -962,6 +1072,38 @@ export default function SELAdventure() {
     .big-change-face { font-size: 1.8rem; margin-bottom: 4px; line-height: 1; }
     .big-change-amount { font-family: 'Fredoka One', cursive; font-size: 2.4rem; font-weight: 900; line-height: 1; }
     .big-change-label { font-size: 0.8rem; font-weight: 700; margin-top: 6px; }
+    /* ===== CRISIS BANNER ===== */
+    .crisis-banner { background: linear-gradient(135deg, #dbeafe, #bfdbfe); border: 2px solid #3b82f6; border-radius: 16px; padding: 20px; margin: 16px 0; text-align: center; }
+    .crisis-title { font-family: 'Fredoka One', cursive; font-size: 1.1rem; color: #1e40af; margin-bottom: 8px; }
+    .crisis-text { color: #1e3a8a; font-size: 0.9rem; margin-bottom: 10px; line-height: 1.5; }
+    .crisis-hotline { background: white; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; color: #1e3a8a; font-size: 0.95rem; line-height: 1.6; }
+    .crisis-chat { color: #3b82f6; font-size: 0.85rem; }
+    /* ===== REFLECTION JOURNAL ===== */
+    .reflection-input { width: 100%; padding: 12px 14px; border: 2px solid #c7d2fe; border-radius: 10px; font-size: 0.9rem; font-family: inherit; margin-bottom: 14px; resize: vertical; min-height: 80px; color: #334155; }
+    .reflection-input:focus { outline: none; border-color: #6366f1; }
+    .response-reflection { font-size: 0.78rem; color: #6366f1; font-style: italic; margin-top: 4px; padding: 6px 10px; background: #eef2ff; border-radius: 8px; }
+    .download-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #0ea5e9, #6366f1); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit; margin-bottom: 10px; }
+    .download-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(14,165,233,0.35); }
+    /* ===== RESUME BANNER ===== */
+    .resume-banner { background: linear-gradient(135deg, #d1fae5, #a7f3d0); border: 2px solid #10b981; border-radius: 14px; padding: 16px 20px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .resume-text { font-weight: 700; color: #065f46; font-size: 0.9rem; }
+    .resume-btn { padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; }
+    .resume-btn:hover { background: #059669; }
+    /* ===== ANONYMOUS / TEACHER BUTTONS ===== */
+    .anon-btn { width: 100%; padding: 12px; background: white; border: 2px dashed #94a3b8; border-radius: 12px; color: #64748b; font-size: 0.9rem; font-weight: 700; cursor: pointer; font-family: inherit; margin-bottom: 10px; }
+    .anon-btn:hover { border-color: #6366f1; color: #6366f1; }
+    .teacher-link { display: block; text-align: center; color: rgba(255,255,255,0.5); font-size: 0.78rem; margin-top: 12px; cursor: pointer; text-decoration: underline; }
+    .teacher-link:hover { color: rgba(255,255,255,0.85); }
+    /* ===== TEACHER VIEW ===== */
+    .teacher-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+    .teacher-stat { background: #f8fafc; border-radius: 12px; padding: 14px; text-align: center; border: 2px solid #e2e8f0; }
+    .teacher-stat-val { font-family: 'Fredoka One', cursive; font-size: 1.8rem; color: #6366f1; }
+    .teacher-stat-lbl { font-size: 0.75rem; color: #64748b; font-weight: 600; margin-top: 2px; }
+    .scenario-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #f8fafc; border-radius: 10px; margin-bottom: 6px; border-left: 4px solid #f43f5e; }
+    .scenario-row-name { font-weight: 700; font-size: 0.88rem; color: #334155; }
+    .scenario-row-count { font-weight: 800; color: #dc2626; font-size: 0.9rem; }
+    .clear-btn { width: 100%; padding: 12px; background: #fee2e2; color: #dc2626; border: 2px solid #f43f5e; border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 700; margin-top: 8px; }
+    .clear-btn:hover { background: #fecaca; }
   `;
 
   // ========== RENDER ==========
@@ -1025,6 +1167,13 @@ export default function SELAdventure() {
             ))}
           </div>
           
+          {hasSavedGame && (
+            <div className="resume-banner">
+              <span className="resume-text">📖 You have a game in progress!</span>
+              <button className="resume-btn" onClick={resumeGame}>Resume →</button>
+            </div>
+          )}
+
           <button
             className="start-btn"
             onClick={() => setGameState('backstory')}
@@ -1032,6 +1181,21 @@ export default function SELAdventure() {
           >
             Continue to Character Setup 🚀
           </button>
+
+          <button
+            className="anon-btn"
+            onClick={() => {
+              if (!gradeLevel) { alert('Please select a grade level first.'); return; }
+              setPlayerName('Anonymous');
+              setGameState('backstory');
+            }}
+          >
+            🙈 Play Anonymously
+          </button>
+
+          <span className="teacher-link" onClick={() => setGameState('teacher')}>
+            Facilitator View
+          </span>
         </div>
       </div>
     );
@@ -1103,6 +1267,123 @@ export default function SELAdventure() {
           >
             Begin Your Day! 🚀
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  // TEACHER / FACILITATOR VIEW
+  if (gameState === 'teacher') {
+    const tData = getTeacherData();
+    const totalSessions = tData.length;
+    const avgScore = totalSessions > 0
+      ? Math.round(tData.reduce((a, s) => a + (s.score / s.maxScore) * 100, 0) / totalSessions)
+      : 0;
+    const gradeLabels = { elementary: 'K-5', middle: '6-8', high: '9-12' };
+    const byGrade = {};
+    tData.forEach(s => {
+      const g = gradeLabels[s.gradeLevel] || s.gradeLevel;
+      byGrade[g] = (byGrade[g] || 0) + 1;
+    });
+    const scenarioDifficulty = {};
+    tData.forEach(s => {
+      s.responses.forEach(r => {
+        if (r.points < 0) scenarioDifficulty[r.scenario] = (scenarioDifficulty[r.scenario] || 0) + 1;
+      });
+    });
+    const hardest = Object.entries(scenarioDifficulty).sort(([,a],[,b]) => b-a).slice(0, 5);
+    const crisisCount = tData.reduce((n, s) =>
+      n + s.responses.filter(r => ['Catastrophic Thinking','Alarming Deflection'].includes(r.skill) && r.points < 0).length, 0);
+
+    return (
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)', fontFamily: "'Nunito', sans-serif", padding: '20px' }}>
+        <style>{styles}</style>
+        <div className="results-card">
+          <div className="trophy">📊</div>
+          <h1 className="results-title">Facilitator View</h1>
+          <p className="level-msg">Aggregate data from sessions played on this device</p>
+
+          {totalSessions === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
+              <div style={{ fontSize: '3rem', marginBottom: 12 }}>🕹️</div>
+              <p>No sessions recorded yet. Have students play the game first!</p>
+            </div>
+          ) : (
+            <>
+              <div className="teacher-stat-grid">
+                <div className="teacher-stat">
+                  <div className="teacher-stat-val">{totalSessions}</div>
+                  <div className="teacher-stat-lbl">Sessions Played</div>
+                </div>
+                <div className="teacher-stat">
+                  <div className="teacher-stat-val">{avgScore}%</div>
+                  <div className="teacher-stat-lbl">Avg Score</div>
+                </div>
+                <div className="teacher-stat">
+                  <div className="teacher-stat-val" style={{ color: crisisCount > 0 ? '#dc2626' : '#10b981' }}>{crisisCount}</div>
+                  <div className="teacher-stat-lbl">Crisis Flags 💙</div>
+                </div>
+              </div>
+
+              {Object.keys(byGrade).length > 0 && (
+                <>
+                  <span className="label">Grade Breakdown</span>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+                    {Object.entries(byGrade).map(([g, n]) => (
+                      <div key={g} style={{ padding: '8px 16px', background: '#eef2ff', borderRadius: 20, fontWeight: 700, color: '#4338ca', fontSize: '0.88rem' }}>
+                        Grades {g}: {n} session{n !== 1 ? 's' : ''}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {hardest.length > 0 && (
+                <>
+                  <span className="label">🔴 Scenarios Students Struggled With Most</span>
+                  <div style={{ marginBottom: 16 }}>
+                    {hardest.map(([name, count]) => (
+                      <div key={name} className="scenario-row">
+                        <span className="scenario-row-name">{name}</span>
+                        <span className="scenario-row-count">{count} negative choice{count !== 1 ? 's' : ''}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p style={{ fontSize: '0.82rem', color: '#94a3b8', marginBottom: 16 }}>
+                    💡 These scenarios may be worth discussing as a class.
+                  </p>
+                </>
+              )}
+
+              <span className="label">Recent Sessions</span>
+              <div className="response-list" style={{ maxHeight: 200 }}>
+                {[...tData].reverse().slice(0, 20).map((s, i) => (
+                  <div key={i} className="response-item" style={{ borderColor: (s.score / s.maxScore) >= 0.6 ? '#10b981' : '#f43f5e' }}>
+                    <span className="response-points" style={{ color: (s.score / s.maxScore) >= 0.6 ? '#059669' : '#dc2626' }}>
+                      {Math.round((s.score / s.maxScore) * 100)}%
+                    </span>
+                    <div className="response-scenario">{s.playerName} — Grades {gradeLabels[s.gradeLevel] || s.gradeLevel}</div>
+                    <div className="response-skill">{s.scenarioCount} scenarios • Score {s.score}/{s.maxScore}</div>
+                    <div className="response-stress">{new Date(s.ts).toLocaleDateString()}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          <button className="restart-btn" onClick={() => setGameState('start')} style={{ marginBottom: 8 }}>
+            ← Back to Game
+          </button>
+          {totalSessions > 0 && (
+            <button className="clear-btn" onClick={() => {
+              if (window.confirm('Clear all session data? This cannot be undone.')) {
+                localStorage.removeItem('sel_teacher_data');
+                setGameState('start');
+              }
+            }}>
+              🗑️ Clear All Session Data
+            </button>
+          )}
         </div>
       </div>
     );
@@ -1287,17 +1568,32 @@ export default function SELAdventure() {
             </div>
           </div>
           
+          {isCrisisChoice(selectedChoice) && (
+            <div className="crisis-banner">
+              <div style={{ fontSize: '1.8rem', marginBottom: '6px' }}>💙</div>
+              <div className="crisis-title">You don't have to feel this alone</div>
+              <div className="crisis-text">
+                If you're having dark or overwhelming thoughts, please reach out for support:
+              </div>
+              <div className="crisis-hotline">
+                <strong>988 Suicide & Crisis Lifeline</strong><br />
+                Call or text <strong>988</strong> — available 24/7, free & confidential
+              </div>
+              <div className="crisis-chat">Or chat at 988lifeline.org</div>
+            </div>
+          )}
+
           <button className="next-btn" style={{ background: isPositive ? '#059669' : '#dc2626' }} onClick={() => setShowReflection(true)}>
             Continue →
           </button>
         </div>
-        
+
         {showReflection && (
           <div className="modal">
             <div className="modal-content">
               <h3 className="modal-title">🤔 Quick Reflection</h3>
               <p className="modal-text">
-                {isPositive 
+                {isPositive
                   ? "What made this choice helpful in this situation?"
                   : "What might have been a better approach here?"
                 }
@@ -1307,8 +1603,15 @@ export default function SELAdventure() {
                   💡 Notice how your stress level affected this situation!
                 </div>
               )}
+              <textarea
+                className="reflection-input"
+                placeholder="Write your thoughts here... (optional)"
+                value={reflectionText}
+                onChange={(e) => setReflectionText(e.target.value)}
+                maxLength={300}
+              />
               <button className="modal-btn" onClick={nextScenario}>
-                I've Reflected - Continue
+                {reflectionText.trim() ? 'Save & Continue ✍️' : 'Continue →'}
               </button>
             </div>
           </div>
@@ -1394,11 +1697,20 @@ export default function SELAdventure() {
                 <div className="response-scenario">{r.timeOfDay} {r.scenario}</div>
                 <div className="response-skill">{r.skill}</div>
                 <div className="response-stress">😤 Stress: {r.stressAfter} &nbsp;|&nbsp; 😊 Calm: {r.calmAfter ?? '—'}</div>
+                {r.reflection && (
+                  <div className="response-reflection">✍️ "{r.reflection}"</div>
+                )}
               </div>
             ))}
           </div>
-          
-          <button className="restart-btn" onClick={() => setGameState('start')}>
+
+          {responses.some(r => r.reflection) && (
+            <button className="download-btn" onClick={downloadJournal}>
+              📥 Download My Reflection Journal
+            </button>
+          )}
+
+          <button className="restart-btn" onClick={() => { localStorage.removeItem('sel_saved_game'); setGameState('start'); }}>
             Play Again 🔄
           </button>
         </div>
