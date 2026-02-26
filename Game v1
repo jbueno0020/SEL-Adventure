@@ -308,155 +308,159 @@ const middleSchoolScenarios = [
   }
 ];
 
+// Recurring characters in the HS story arc:
+// Coach Reyes (your coach), Destiny (best friend), Marcus (hothead teammate/rival),
+// Jordan (friend who struggles), Tyler (pressure figure), Dr. Okafor (school counselor)
+
 const highSchoolScenarios = [
   {
-    id: 'h1', title: "The Sleep Deficit", timeOfDay: "🌅 Morning", timeOrder: 1,
-    situation: "You stayed up until 2 AM finishing a paper. You're exhausted with a full day ahead.",
+    id: 'h1', title: "Game Day Morning", timeOfDay: "🌅 Morning", timeOrder: 1,
+    situation: "It's the day of the biggest game of the season — and your alarm didn't go off. You have 20 minutes before the team bus leaves. Your phone shows 14 notifications, including a text from Coach Reyes: 'Everyone on time today. No exceptions.'",
     choices: [
-      { text: "Cold shower, plan to go to bed early tonight", points: 2, skill: "Adaptive Recovery", consequence: "You push through and prioritize sleep tonight. Not sustainable long-term though.", emoji: "💚" },
-      { text: "Grab coffee and accept today will be rough", points: 1, skill: "Acceptance", consequence: "Hard day but you get through it.", emoji: "💙" },
-      { text: "Text a friend to cover for you and skip first period", points: -1, skill: "Avoidance with Deception", consequence: "More sleep but miss content and risk getting caught.", emoji: "🟠" },
-      { text: "Call in sick and miss the whole day", points: -2, skill: "Complete Avoidance", consequence: "Behind on everything now. One rough morning became a day of makeup work.", emoji: "🔴" }
+      { text: "Throw on your gear, text Coach you're coming, skip breakfast — just get there", points: 2, skill: "Prioritization Under Pressure", consequence: "You make it with two minutes to spare. Coach gives you a look but nods. You're ready. The recruiter in the stands tonight doesn't know how close it was.", emoji: "💚" },
+      { text: "Wake up your parent, get a quick ride and a granola bar, cut it close", points: 1, skill: "Adaptive Recovery", consequence: "You arrive frazzled but present. Coach raises an eyebrow. You channel the adrenaline into warm-ups.", emoji: "💙" },
+      { text: "Panic-scroll notifications for 10 minutes before you even get up", points: -1, skill: "Distraction Over Action", consequence: "You're late. The team had to hold the bus. Coach doesn't yell — the silence is worse. The tension follows you onto the court.", emoji: "🟠" },
+      { text: "Text your parent to call you in sick — the pressure is too much today", points: -2, skill: "Avoidance of High Stakes", consequence: "You miss the game. The scholarship recruiter was in the stands. When Destiny texts 'Where are you??', you don't know what to say.", emoji: "🔴" }
     ]
   },
   {
-    id: 'h2', title: "The Social Media Comparison", timeOfDay: "🌅 Morning", timeOrder: 1,
-    situation: "Everyone's posting college acceptances, parties, relationships. Your life feels like it doesn't measure up.",
+    id: 'h2', title: "The College Notification", timeOfDay: "🌅 Morning", timeOrder: 1,
+    situation: "You check your email before school and see the subject line: 'Your Application Decision from Westfield University.' Your hands are shaking a little. You've wanted this school since 9th grade. You open it. It's a rejection.",
     choices: [
-      { text: "Remember social media is a highlight reel, then put phone down", points: 2, skill: "Critical Media Literacy", consequence: "You start your day on your own terms.", emoji: "💚" },
-      { text: "Limit yourself to 5 minutes then get ready", points: 1, skill: "Digital Boundaries", consequence: "You set a boundary even if FOMO stings.", emoji: "💙" },
-      { text: "Keep scrolling even though it makes you feel worse", points: -1, skill: "Self-Defeating Behavior", consequence: "Late getting ready and feeling bad about yourself.", emoji: "🟠" },
-      { text: "Post something exaggerated to make your life look better", points: -2, skill: "Performative Inauthenticity", consequence: "Now you're part of the same problem. Feels empty.", emoji: "🔴" }
+      { text: "Take 5 minutes to feel it fully, then text Destiny: 'Didn't get in. Can we talk at lunch?'", points: 2, skill: "Emotional Processing + Help-Seeking", consequence: "By lunch, you've cried a little, laughed a little, and made a plan. Destiny reminds you of two other schools you actually loved. The door closed — others are open.", emoji: "💚" },
+      { text: "Close the email, focus on getting to school, let yourself feel it tonight", points: 1, skill: "Healthy Compartmentalization", consequence: "You hold it together through the day. It hits harder at night, but you're in a better place to process it then. Dr. Okafor catches your eye in the hall and you make a mental note to stop by.", emoji: "💙" },
+      { text: "Spiral for an hour reading rejection story threads on Reddit before school", points: -1, skill: "Rumination", consequence: "You arrive late, red-eyed and mentally exhausted. The school day feels like noise.", emoji: "🟠" },
+      { text: "Post a bitter story tagging the school: 'Their loss. System is rigged anyway.'", points: -2, skill: "Reactive Oversharing", consequence: "Screenshots circulate by homeroom. Teachers ask if you're okay. The attention makes it worse, not better.", emoji: "🔴" }
     ]
   },
   {
-    id: 'h3', title: "The Parking Lot Incident", timeOfDay: "🚗 Arrival", timeOrder: 2,
-    situation: "Someone takes the parking spot you were clearly waiting for. They wave and walk away.",
+    id: 'h3', title: "The Hallway Call-Out", timeOfDay: "🏫 Arrival", timeOrder: 2,
+    situation: "Walking into school, you cross paths with Marcus — from your rival team — who's here for a joint athletic meeting. He spots you in front of a crowd and says loudly: 'Hope your game shows up tonight. Last time was embarrassing for you.'",
     choices: [
-      { text: "Deep breath, find another spot, let it go", points: 2, skill: "Anger Regulation", consequence: "You find another spot. By first period, you've forgotten about it.", emoji: "💚" },
-      { text: "Feel annoyed but find another spot without engaging", points: 1, skill: "Avoidant Coping", consequence: "You're irritated but didn't escalate.", emoji: "💙" },
-      { text: "Roll down window and yell at them", points: -1, skill: "Verbal Aggression", consequence: "They ignore you. You're worked up over something that didn't change.", emoji: "🟠" },
-      { text: "Block them in with your car to 'teach them a lesson'", points: -2, skill: "Revenge Behavior", consequence: "Could lead to confrontation, damage, or school trouble. Not worth it.", emoji: "🔴" }
+      { text: "'Game's tonight. I'll let my play talk.' Keep walking.", points: 2, skill: "Composed Confidence", consequence: "The crowd goes quiet — in a good way. Marcus looks annoyed he didn't get a reaction. You've already moved on. He hasn't.", emoji: "💚" },
+      { text: "Ignore him completely and walk past without breaking stride", points: 1, skill: "Strategic Non-Engagement", consequence: "You don't give him anything. A few people catch your eye and nod. Smart.", emoji: "💙" },
+      { text: "Clap back with something about his team's record in front of everyone", points: -1, skill: "Reactive Trash Talk", consequence: "The crowd reacts, but you're fired up in the wrong way for the next 3 hours. Marcus won exactly what he wanted.", emoji: "🟠" },
+      { text: "Get in his face — security has to step between you", points: -2, skill: "Physical Escalation", consequence: "You're both pulled aside. Now you're worried about suspension on game day. Coach Reyes gets a call. The recruiter might hear.", emoji: "🔴" }
     ]
   },
   {
-    id: 'h4', title: "The Graded Essay", timeOfDay: "📚 1st Period", timeOrder: 3,
-    situation: "Your essay comes back as a C. You worked hard and expected at least a B. Comments all over it.",
+    id: 'h4', title: "The History Test", timeOfDay: "📚 1st Period", timeOrder: 3,
+    situation: "You sit down for the history test you've been dreading. You got back late from last night's away game and barely studied. The person next to you shifts their paper slightly in your direction — not an accident.",
     choices: [
-      { text: "Read comments carefully and ask to meet with teacher", points: 2, skill: "Growth Orientation", consequence: "Teacher impressed by initiative. Next essay improves significantly.", emoji: "💚" },
-      { text: "Accept grade and read comments to learn for next time", points: 1, skill: "Acceptance", consequence: "It stings but you'll use it to do better.", emoji: "💙" },
-      { text: "Skim comments and tell yourself teacher doesn't like your style", points: -1, skill: "Defensive Dismissal", consequence: "Protect ego but miss learning opportunity.", emoji: "🟠" },
-      { text: "Argue with teacher in front of class", points: -2, skill: "Public Confrontation", consequence: "Teacher not swayed. Grade stands and now there's tension.", emoji: "🔴" }
+      { text: "Cover your own paper, focus on what you actually know, leave the rest blank", points: 2, skill: "Academic Integrity", consequence: "You don't ace it. But every answer is yours. The grade stings less than you expected — there's something clean about it.", emoji: "💚" },
+      { text: "Look away from their paper and pull together what you studied and discussed in class", points: 1, skill: "Resourcefulness Under Pressure", consequence: "You piece together enough. Not your best work, but honest work.", emoji: "💙" },
+      { text: "Glance at their answers for the questions you've completely blanked on", points: -1, skill: "Academic Dishonesty", consequence: "You feel watched the entire period. The anxiety burns more energy than the answers saved.", emoji: "🟠" },
+      { text: "Photograph their paper with your phone under the desk", points: -2, skill: "Serious Academic Misconduct", consequence: "The teacher notices. You're called out after class. This goes on your record — the kind that follows college applications.", emoji: "🔴" }
     ]
   },
   {
-    id: 'h5', title: "The Lab Partner Problem", timeOfDay: "🔬 2nd Period", timeOrder: 4,
-    situation: "Your lab partner hasn't done their share of the joint report. You've reminded them twice.",
+    id: 'h5', title: "The AP Essay Crisis", timeOfDay: "📖 2nd Period", timeOrder: 4,
+    situation: "Your AP Lit teacher announces the essay due today cannot be pushed — it's 25% of your grade. You forgot. Between practice, the game, and the college stuff, it completely slipped. You have zero words written.",
     choices: [
-      { text: "'Hey, I need us to split this fairly. Can we make a plan now?'", points: 2, skill: "Assertive Communication", consequence: "They apologize and you divide work clearly. Boundaries work.", emoji: "💚" },
-      { text: "Email teacher to ask for advice", points: 1, skill: "Appropriate Escalation", consequence: "Teacher appreciates it. They talk to partner and help facilitate.", emoji: "💙" },
-      { text: "Do it yourself and silently resent them", points: -1, skill: "Passive Self-Sacrifice", consequence: "Done but exhausted and angry. Will probably happen again.", emoji: "🟠" },
-      { text: "Tell everyone your partner is lazy", points: -2, skill: "Social Sabotage", consequence: "Word gets back. Damaged partnership and they're less motivated now.", emoji: "🔴" }
+      { text: "Go to the teacher before class ends, explain honestly, and ask for a makeup plan", points: 2, skill: "Assertive Self-Advocacy", consequence: "The teacher respects your honesty. You get a 72 with a late penalty — not great, but real. You leave with a plan and your dignity intact.", emoji: "💚" },
+      { text: "Write as fast as you can during passing periods and lunch, submit whatever you have", points: 1, skill: "Resilient Problem-Solving", consequence: "It's scrambled and short. But partial credit beats a zero, and your teacher sees the effort.", emoji: "💙" },
+      { text: "Submit an essay you find online with a few words changed", points: -1, skill: "Plagiarism", consequence: "Turnitin flags it immediately. Now it's a zero AND an academic integrity report. The essay became the least of your problems.", emoji: "🟠" },
+      { text: "Skip class entirely to avoid the confrontation", points: -2, skill: "Conflict Avoidance", consequence: "Unexcused absence + automatic zero. Your GPA takes a serious hit right when college apps need it most.", emoji: "🔴" }
     ]
   },
   {
-    id: 'h6', title: "The Vape Offer", timeOfDay: "☕ Break", timeOrder: 5,
-    situation: "Someone you want to fit in with offers their vape. Others are using it. You've never vaped.",
+    id: 'h6', title: "The Locker Room Offer", timeOfDay: "🏃 Pre-Practice", timeOrder: 5,
+    situation: "Before warm-ups, Tyler pulls you aside in the locker room. 'Take the edge off before the game, bro. Everyone does it.' He holds out a small pill. You have no idea what it is. The game is in four hours.",
     choices: [
-      { text: "'Nah, I'm good' and stay in conversation about something else", points: 2, skill: "Confident Refusal", consequence: "Most people shrug. You stayed true to yourself without making it awkward.", emoji: "💚" },
-      { text: "Make a casual excuse about having a drug test coming up", points: 1, skill: "Face-Saving Refusal", consequence: "Excuse works. Not fully authentic but avoided pressure.", emoji: "💙" },
-      { text: "Take a small hit even though you don't want to", points: -1, skill: "Conformity Against Values", consequence: "You cough and feel weird. Did something you didn't want for approval.", emoji: "🟠" },
-      { text: "Take it and keep using whenever offered", points: -2, skill: "Risky Conformity", consequence: "Started a habit you didn't want. Harder to stop than you thought.", emoji: "🔴" }
+      { text: "'Nah, I'm good. I need my head clear tonight.' Walk straight to the gym.", points: 2, skill: "Confident Refusal", consequence: "Tyler shrugs. You feel clear-headed going into warm-ups. Coach Reyes pulls you aside: 'You look focused today.' You are.", emoji: "💚" },
+      { text: "Shake your head, say you're drug-tested for recruitment, and leave", points: 1, skill: "Face-Saving Refusal", consequence: "He accepts it. Not fully honest, but you got out clean. You wonder if Tyler's doing okay.", emoji: "💙" },
+      { text: "Take it without asking what it is — you don't want to look scared", points: -1, skill: "Uninformed Compliance", consequence: "You feel off during warm-ups. Sluggish and disconnected. Coach notices something. You don't tell anyone what happened.", emoji: "🟠" },
+      { text: "Take it and tell Tyler to save more for after the game", points: -2, skill: "Escalating Risk-Taking", consequence: "Your performance is visibly impaired. Coach benches you. Destiny texts from the stands: 'Is everything okay??' You don't answer.", emoji: "🔴" }
     ]
   },
   {
-    id: 'h7', title: "The Presentation Panic", timeOfDay: "🎤 3rd Period", timeOrder: 6,
-    situation: "You have to present soon. Your heart is racing and hands are shaking.",
+    id: 'h7', title: "The Team Group Chat", timeOfDay: "📱 Between Classes", timeOrder: 5,
+    situation: "The team group chat explodes. Marcus is calling out Devon — another teammate — saying Devon's responsible for last game's loss. People are picking sides and @-ing you specifically. 'You were there — say something.'",
     choices: [
-      { text: "Slow breaths, remember you prepared, focus on content not appearance", points: 2, skill: "Anxiety Management", consequence: "You get through it. Not perfect but done. You're proud for facing fear.", emoji: "💚" },
-      { text: "Volunteer to go first to get it over with", points: 1, skill: "Proactive Coping", consequence: "You stumble a bit but then can relax the rest of class.", emoji: "💙" },
-      { text: "Ask to present tomorrow because you 'don't feel ready'", points: -1, skill: "Delay Tactics", consequence: "Teacher lets you, but anxiety doesn't go away by avoiding.", emoji: "🟠" },
-      { text: "Pretend to be sick and go to the nurse", points: -2, skill: "Complete Avoidance", consequence: "Might have to make up with worse option. Avoidance backfires.", emoji: "🔴" }
+      { text: "'This isn't the place for this. Save it for practice.' Mute the chat.", points: 2, skill: "Digital Leadership", consequence: "A few teammates react positively. The chat simmers. Devon texts you privately: 'Thanks for not piling on.' That matters.", emoji: "💚" },
+      { text: "Mute the chat, say nothing publicly, check in with Devon in person later", points: 1, skill: "Thoughtful Restraint", consequence: "You stay out of it. Devon appreciates that you didn't join the pile. The drama burns out on its own by practice.", emoji: "💙" },
+      { text: "Jump in, pick a side, start defending them publicly in the chat", points: -1, skill: "Drama Participation", consequence: "Now you're part of it. The team atmosphere at practice is tense. Coach Reyes notices and makes everyone run extra.", emoji: "🟠" },
+      { text: "Screenshot the thread and share it outside the team group", points: -2, skill: "Trust Violation", consequence: "Devon finds out. So does Coach. A mandatory team meeting gets called. Your name is in the middle of it all.", emoji: "🔴" }
     ]
   },
   {
-    id: 'h8', title: "The Ex Encounter", timeOfDay: "🍕 Lunch", timeOrder: 7,
-    situation: "You see your ex with someone new. They're laughing together. You're not over the breakup.",
+    id: 'h8', title: "The Starting Lineup", timeOfDay: "🏆 Game Day", timeOrder: 6,
+    situation: "Coach Reyes posts the starting lineup for tonight. You check it during passing period. You're not in it. A sophomore — someone who just joined the program — is starting in your spot. A scholarship recruiter is going to be watching tonight.",
     choices: [
-      { text: "Acknowledge the feeling, sit with friends, focus on your life", points: 2, skill: "Healthy Processing", consequence: "It hurts but you don't act on it. The feeling fades.", emoji: "💚" },
-      { text: "Go eat somewhere else to give yourself space", points: 1, skill: "Strategic Avoidance", consequence: "You give yourself room to process. Self-care.", emoji: "💙" },
-      { text: "Stare at them the whole lunch, analyzing everything", points: -1, skill: "Obsessive Monitoring", consequence: "You torture yourself and don't eat.", emoji: "🟠" },
-      { text: "Walk by and make a loud negative comment", points: -2, skill: "Vindictive Behavior", consequence: "Obvious you're trying to get reaction. Look petty, feel worse.", emoji: "🔴" }
+      { text: "Go see Coach privately after school: 'What do I need to work on to earn that back?'", points: 2, skill: "Accountable Growth Mindset", consequence: "Coach tells you exactly what they saw in film. You come off the bench and play the best 12 minutes of your season. The recruiter takes note.", emoji: "💚" },
+      { text: "Take a breath, feel the disappointment privately, then decide to prove it on the court", points: 1, skill: "Emotional Regulation + Motivation", consequence: "Your backup minutes are some of your best this season. You're not happy — but you're not broken either.", emoji: "💙" },
+      { text: "Text the team group chat: 'This lineup doesn't make sense. Everyone knows it.'", points: -1, skill: "Reactive Undermining", consequence: "Word gets back to Coach. Your attitude becomes the story, not your skill. The recruiter hears about the drama.", emoji: "🟠" },
+      { text: "Confront Coach in front of the team during the pre-game meeting", points: -2, skill: "Public Insubordination", consequence: "Coach sits you for the entire game. The recruiter watches you spend the night at the end of the bench. This was the wrong hill to die on.", emoji: "🔴" }
     ]
   },
   {
-    id: 'h9', title: "The College Conversation", timeOfDay: "📐 4th Period", timeOrder: 8,
-    situation: "Everyone's talking about college plans. You're not sure what you want and feel pressured to have it figured out.",
+    id: 'h9', title: "The Cafeteria Moment", timeOfDay: "🍕 Lunch", timeOrder: 7,
+    situation: "You're eating lunch with Destiny when you both notice Jordan — a kid from your AP class — sitting completely alone at the end of a table, staring at their phone. You heard Jordan tell a teacher last week they were 'going through a lot at home.' Jordan looks up, sees you, then looks back down.",
     choices: [
-      { text: "'I'm still figuring it out, and I think that's okay'", points: 2, skill: "Authentic Self-Acceptance", consequence: "Others admit they feel the same. Your honesty opens real conversation.", emoji: "💚" },
-      { text: "Listen without committing, say you're 'exploring options'", points: 1, skill: "Neutral Deflection", consequence: "You don't feel pressured to have answers you don't have.", emoji: "💙" },
-      { text: "Make up an impressive plan you haven't actually thought about", points: -1, skill: "Performative Certainty", consequence: "Sound sure but feel like a fraud inside.", emoji: "🟠" },
-      { text: "Get defensive: 'Not everyone needs college!'", points: -2, skill: "Defensive Hostility", consequence: "Shut down people who might have helped or related to you.", emoji: "🔴" }
+      { text: "Grab your tray and go sit near Jordan. 'Hey — you can sit with us if you want.'", points: 2, skill: "Active Empathy", consequence: "Jordan looks genuinely relieved. You don't have to say much. Destiny keeps the conversation light. Sometimes just not being alone is everything.", emoji: "💚" },
+      { text: "Make eye contact across the room and give a small nod or wave", points: 1, skill: "Acknowledgment", consequence: "It's a small thing, but it's real. Jordan's posture softens. You make a note to check in after class.", emoji: "💙" },
+      { text: "Feel bad about it, but stay in your conversation and tell yourself Jordan probably wants space", points: -1, skill: "Bystander Rationalization", consequence: "You know it wasn't your best moment. That feeling sticks with you through 5th period.", emoji: "🟠" },
+      { text: "Make a comment to Destiny about why Jordan is always alone", points: -2, skill: "Unkindness", consequence: "Someone at your table knows Jordan well. It gets back. You made a hard situation worse.", emoji: "🔴" }
     ]
   },
   {
-    id: 'h10', title: "The Academic Honesty Line", timeOfDay: "💻 5th Period", timeOrder: 9,
-    situation: "Classmate offers a copy of last year's test that teacher reuses. 'Everyone does it.'",
+    id: 'h10', title: "The Scholarship Call", timeOfDay: "📐 4th Period", timeOrder: 8,
+    situation: "Dr. Okafor pulls you out of a free period. A D2 athletic program called — they're offering a partial scholarship, but they need to know your interest level by Friday. You hadn't considered this school at all. Your parents have always said D1 or nothing.",
     choices: [
-      { text: "Decline and study on your own—earn your grade honestly", points: 2, skill: "Integrity", consequence: "Might not ace it, but proud of what you know. Integrity intact.", emoji: "💚" },
-      { text: "Look at topics to study, but actually learn the material", points: 1, skill: "Gray Area", consequence: "Ethically murky. You learn content but had unfair advantage.", emoji: "💙" },
-      { text: "Use it to memorize exact answers", points: -1, skill: "Academic Dishonesty", consequence: "Do well but learn nothing. Know it wasn't earned.", emoji: "🟠" },
-      { text: "Share it with others—everyone should have same advantage", points: -2, skill: "Spreading Dishonesty", consequence: "If discovered, multiple people in trouble including you.", emoji: "🔴" }
+      { text: "'Can I have 48 hours to research the program and talk to my family?' Request more time.", points: 2, skill: "Informed Decision-Making", consequence: "Dr. Okafor says yes. You do your homework. The conversation with your parents is hard and honest. You end up with a real answer — not a reflexive one.", emoji: "💚" },
+      { text: "Ask Dr. Okafor to email you all the details so you can review everything first", points: 1, skill: "Information-Seeking", consequence: "Smart move. You have real information before emotion takes over. You'll process this tonight with a clear head.", emoji: "💙" },
+      { text: "Say you're not interested right away — it's not D1, so why even bother", points: -1, skill: "Premature Foreclosure", consequence: "You close a door before you know what's behind it. Dr. Okafor looks concerned but doesn't push. You wonder about it for weeks.", emoji: "🟠" },
+      { text: "Reject it immediately because your parents would disapprove if they found out you considered it", points: -2, skill: "People-Pleasing Over Self-Advocacy", consequence: "You never figure out what YOU actually want. Years later, you'll wonder what might have been if you'd asked more questions.", emoji: "🔴" }
     ]
   },
   {
-    id: 'h11', title: "The Mental Health Moment", timeOfDay: "📝 6th Period", timeOrder: 10,
-    situation: "You've been feeling really low lately. Friend notices and asks if you're okay.",
+    id: 'h11', title: "Jordan's Story", timeOfDay: "📱 Between Classes", timeOrder: 9,
+    situation: "Destiny texts you: 'Did you see what Jordan posted?' You open it. Jordan's story just says: 'maybe some people just aren't meant to be here.' No context. No follow-up. You have class in 4 minutes.",
     choices: [
-      { text: "'Actually, I haven't been feeling great. Can we talk after school?'", points: 2, skill: "Vulnerability", consequence: "Friend listens and helps figure out next steps. You feel less alone.", emoji: "💚" },
-      { text: "'I'm struggling a bit. Might talk to the counselor.'", points: 1, skill: "Self-Advocacy", consequence: "Admitting it is a start. Professional support is a good idea.", emoji: "💙" },
-      { text: "'I'm fine, just tired' and deflect", points: -1, skill: "Minimization", consequence: "Missed chance to open up. Feelings don't go away by not talking.", emoji: "🟠" },
-      { text: "Make a dark joke that worries them but don't explain", points: -2, skill: "Alarming Deflection", consequence: "Friend is scared and doesn't know how to help. More isolated.", emoji: "🔴" }
+      { text: "Call Jordan right now, even if it means being late to class. 'Hey — I saw your story. I'm worried about you. Can we talk?'", points: 2, skill: "Crisis Response + Active Care", consequence: "Jordan picks up. Their voice is shaky. You listen. By the end of passing period, you've walked them to Dr. Okafor's office. This was the most important thing you did today.", emoji: "💚" },
+      { text: "Text Jordan directly: 'I saw your story. You okay? I'm here whenever you need.' Then tell a trusted adult.", points: 1, skill: "Proactive Support", consequence: "Jordan responds eventually. It opens a door. Telling a counselor was the right call — they check in too. Jordan isn't alone.", emoji: "💙" },
+      { text: "Forward the story to your friend group asking 'is this okay??' before doing anything else", points: -1, skill: "Gossip Over Action", consequence: "Now it's spreading. No adult knows. Jordan sees people whispering and feels exposed — not supported.", emoji: "🟠" },
+      { text: "Assume it's vague-posting for attention and keep walking to class", points: -2, skill: "Dismissal of Warning Signs", consequence: "Jordan needed someone to notice and take it seriously. Nobody did. They spend the afternoon alone, feeling invisible.", emoji: "🔴" }
     ]
   },
   {
-    id: 'h12', title: "The Work-School Balance", timeOfDay: "🏫 End of Day", timeOrder: 11,
-    situation: "You have work tonight but also a test tomorrow you haven't studied for. Boss doesn't like call-outs.",
+    id: 'h12', title: "Before the Game", timeOfDay: "🏫 After School", timeOrder: 10,
+    situation: "Two hours before tip-off, your partner texts: 'You missed my performance AGAIN last weekend and now you won't even talk about it. We need to talk RIGHT NOW.' You care about them. But you also need to focus. Tonight matters.",
     choices: [
-      { text: "Honestly call boss, explain, offer to pick up extra shift later", points: 2, skill: "Assertive Prioritization", consequence: "Boss annoyed but respects honesty. You study and do well.", emoji: "💚" },
-      { text: "Go to work but bring notes for slow moments", points: 1, skill: "Attempted Balance", consequence: "Exhausted and only study a little, but manage both. Barely.", emoji: "💙" },
-      { text: "Skip studying and hope test is easy", points: -1, skill: "Risky Gambling", consequence: "Test is not easy. Grade suffers.", emoji: "🟠" },
-      { text: "Just don't show up to work without calling", points: -2, skill: "Irresponsible Avoidance", consequence: "Boss is furious. Might lose the job. Never the answer.", emoji: "🔴" }
+      { text: "'I hear you and I want to talk — not in a text. Can we connect right after the game? This conversation deserves my full attention.'", points: 2, skill: "Assertive Boundary + Emotional Care", consequence: "They're hurt but they respect it. After the game, you actually have the conversation — with space and honesty. You don't lose either the game or the relationship.", emoji: "💚" },
+      { text: "Call them quickly — listen, validate that you've been absent, ask for a little time to get through tonight", points: 1, skill: "Active Listening + Honesty", consequence: "The call is short but genuine. They don't love it, but they feel heard. You go in with a clearer head.", emoji: "💙" },
+      { text: "Text back: 'I can't believe you're doing this right now' and shut your phone off", points: -1, skill: "Defensive Avoidance", consequence: "You both stew. You play distracted. The relationship and the game both suffer.", emoji: "🟠" },
+      { text: "Leave the texts on read and deal with it after — they'll understand once you win", points: -2, skill: "Avoidance + Assumption", consequence: "They spiral all night. You play distracted. When you finally reach out, 'I was busy' doesn't land the way you hoped.", emoji: "🔴" }
     ]
   },
   {
-    id: 'h13', title: "The Party Invitation", timeOfDay: "🏠 After School", timeOrder: 12,
-    situation: "Invited to a party with drinking. Parents don't know and wouldn't approve. You want to go for social reasons.",
+    id: 'h13', title: "After the Final Buzzer", timeOfDay: "🌆 Evening", timeOrder: 11,
+    situation: "The game is over. Win or lose, the team is heading to a party at Marcus's place. There's alcohol everywhere. Coach Reyes's only rule: no drinking before school or games. You notice a girl across the room who's had way too much — her friends are gone and she looks unsteady.",
     choices: [
-      { text: "Decide based on your own values, not what others expect", points: 2, skill: "Values-Based Decision", consequence: "Whether you go or not, you make a choice that aligns with who you want to be.", emoji: "💚" },
-      { text: "Go but set personal limits beforehand and stick to them", points: 1, skill: "Harm Reduction", consequence: "You go, stay within boundaries, have a plan. You manage the risk.", emoji: "💙" },
-      { text: "Go and drink more than planned because everyone else is", points: -1, skill: "Loss of Boundaries", consequence: "End up in situations you're not comfortable with.", emoji: "🟠" },
-      { text: "Go, lie to parents, and get really drunk", points: -2, skill: "High-Risk Behavior", consequence: "Something goes wrong. Consequences are serious.", emoji: "🔴" }
+      { text: "Stay sober and make sure she has a safe way home — call her a ride or find someone she trusts", points: 2, skill: "Moral Courage + Active Care", consequence: "She's safe. You find out her name the next day. She thanks you. You don't even need recognition — you made the right call and you know it.", emoji: "💚" },
+      { text: "Get a trusted friend to help, call her an Uber together, make sure she's okay before you leave", points: 1, skill: "Collaborative Responsibility", consequence: "She gets home safe. You both feel good about that. It didn't ruin your night — it defined it.", emoji: "💙" },
+      { text: "Notice it, feel uncomfortable, assume someone else will step in", points: -1, skill: "Bystander Effect", consequence: "Nobody else steps in either. The next day there are rumors about what happened. You know you could have done something. That feeling doesn't go away fast.", emoji: "🟠" },
+      { text: "Take videos of her and post them to your story", points: -2, skill: "Exploitation", consequence: "You filmed someone vulnerable without consent. What follows — socially and potentially legally — is serious. This is one of those moments you can't take back.", emoji: "🔴" }
     ]
   },
   {
-    id: 'h14', title: "The Relationship Pressure", timeOfDay: "📱 Evening", timeOrder: 12,
-    situation: "Person you're dating pressures you to send photos you're not comfortable with. 'If you loved me, you would.'",
+    id: 'h14', title: "The Cover Story", timeOfDay: "🏠 After School", timeOrder: 12,
+    situation: "Tyler texts you the next morning: 'Marcus is going to tell Coach what happened at the party. I told him something in confidence and now it's going to blow up. Just say I was with you all night — Coach won't question it if it comes from you.'",
     choices: [
-      { text: "'I'm not comfortable with that. Someone who cares wouldn't pressure me.'", points: 2, skill: "Firm Boundary", consequence: "Their response tells you a lot about them.", emoji: "💚" },
-      { text: "Say you're not ready and change subject", points: 1, skill: "Soft Boundary", consequence: "Dodge for now but might come up again. Think about if they respect boundaries.", emoji: "💙" },
-      { text: "Feel guilty and consider doing it even though uncomfortable", points: -1, skill: "Boundary Erosion", consequence: "Guilt isn't a good reason. Discomfort is telling you something.", emoji: "🟠" },
-      { text: "Send the photos because afraid of losing them", points: -2, skill: "Coerced Compliance", consequence: "Once sent, you can't control them. Someone who pressures doesn't truly respect you.", emoji: "🔴" }
+      { text: "'I can't lie to Coach for you. But let's talk about how to handle this honestly before it gets worse.'", points: 2, skill: "Integrity + Loyal Honesty", consequence: "Tyler is frustrated, but you didn't compromise yourself. The truth comes out anyway — it usually does. Your integrity stays intact and Coach notices that.", emoji: "💚" },
+      { text: "'I won't lie, but I won't bring it up unless Coach asks me directly either.' Set that limit.", points: 1, skill: "Principled Boundary", consequence: "Fair and honest. You protect yourself without throwing Tyler overboard. It's not a perfect solution but it's a real one.", emoji: "💙" },
+      { text: "Agree to back up Tyler's story — he'd do it for you, right?", points: -1, skill: "Complicity", consequence: "You're now inside the cover-up. Coach doesn't fully believe anyone. You spend the next week worried you'll be the one called in.", emoji: "🟠" },
+      { text: "Agree to lie, then panic when Coach asks you directly and tell a different story", points: -2, skill: "Compounding Dishonesty", consequence: "Now nobody trusts you — not Tyler, not Coach, not your teammates. You tried to protect everyone and ended up hurting everyone, including yourself.", emoji: "🔴" }
     ]
   },
   {
-    id: 'h15', title: "The Future Anxiety", timeOfDay: "🌙 Night", timeOrder: 13,
-    situation: "Lying in bed thinking about everything—college, grades, friendships, future. Can't turn brain off.",
+    id: 'h15', title: "The Night Spiral", timeOfDay: "🌙 Night", timeOrder: 13,
+    situation: "It's 11 PM. College app due in 3 days. Six texts you haven't answered. Grades slipping in two APs. You're lying in bed staring at the ceiling, and a thought creeps in: what if none of this effort actually matters? What if you're not enough? The thought sits there, heavier than it should.",
     choices: [
-      { text: "Write down worries, then one small action for each tomorrow", points: 2, skill: "Action Planning", consequence: "Getting it out of your head helps. You have a plan and can sleep.", emoji: "💚" },
-      { text: "Do a calming activity until mind settles", points: 1, skill: "Self-Soothing", consequence: "Takes time but nervous system calms. You fall asleep eventually.", emoji: "💙" },
-      { text: "Keep scrolling phone hoping distraction helps", points: -1, skill: "Avoidant Coping", consequence: "Blue light keeps you awake. Social media adds more to worry about.", emoji: "🟠" },
-      { text: "Decide everything is hopeless and spiral into darker thoughts", points: -2, skill: "Catastrophic Thinking", consequence: "Thoughts get worse. Reaching out for help is important—you don't have to feel this alone.", emoji: "🔴" }
+      { text: "Open your notes app. Write one true thing that was good today. Write one thing you can actually do tomorrow. Close everything else.", points: 2, skill: "Grounding + Action Planning", consequence: "The spiral slows. You can't fix everything tonight — but you don't have to. You sleep. Tomorrow you can start. That's enough.", emoji: "💚" },
+      { text: "Text Destiny: 'I'm deep in my head tonight. You up?' Let someone in.", points: 1, skill: "Vulnerability + Connection", consequence: "She's up. You talk. It's not fixed, but you feel less alone. Sleep comes eventually. That matters.", emoji: "💙" },
+      { text: "Keep scrolling until 2 AM hoping the noise drowns out the thoughts", points: -1, skill: "Avoidance through Distraction", consequence: "You wake exhausted and more behind. The thoughts are still there — they just waited.", emoji: "🟠" },
+      { text: "Decide none of it matters — not the apps, not the game, not school — and let the thought get darker", points: -2, skill: "Catastrophic Thinking", consequence: "Thoughts get darker and harder to hold alone. This is the kind of night where reaching out matters more than anything else. Text or call 988 — someone will answer and they want to hear from you.", emoji: "🔴" }
     ]
   }
 ];
@@ -538,6 +542,136 @@ const getModifiedConsequence = (choice, stress) => {
   return { consequence, bonusPoints, stressChange, calmChange };
 };
 
+// ========== BACKSTORY CHIP DATA ==========
+
+const calmActivityChips = [
+  { id: 'music',    label: 'Listening to music',       emoji: '🎵' },
+  { id: 'sports',   label: 'Playing sports',           emoji: '⚽' },
+  { id: 'art',      label: 'Drawing or painting',      emoji: '🎨' },
+  { id: 'gaming',   label: 'Playing video games',      emoji: '🎮' },
+  { id: 'outside',  label: 'Being outside',            emoji: '🌿' },
+  { id: 'cooking',  label: 'Cooking or baking',        emoji: '🍳' },
+  { id: 'reading',  label: 'Reading',                  emoji: '📚' },
+  { id: 'sleep',    label: 'Resting or napping',       emoji: '😴' },
+  { id: 'friends',  label: 'Hanging out with friends', emoji: '🤝' },
+  { id: 'pet',      label: 'Being with my pet',        emoji: '🐶' },
+  { id: 'journal',  label: 'Writing or journaling',    emoji: '✍️' },
+  { id: 'prayer',   label: 'Prayer or meditation',     emoji: '🙏' }
+];
+
+const supportPersonChips = [
+  { id: 'mom',       label: 'My mom',                  emoji: '👩' },
+  { id: 'dad',       label: 'My dad',                  emoji: '👨' },
+  { id: 'bestie',    label: 'My best friend',          emoji: '💛' },
+  { id: 'sib',       label: 'A sibling',               emoji: '👫' },
+  { id: 'coach',     label: 'A coach or teacher',      emoji: '🏆' },
+  { id: 'counselor', label: 'A school counselor',      emoji: '💬' },
+  { id: 'grandpa',   label: 'A grandparent',           emoji: '👴' },
+  { id: 'aunt',      label: 'An aunt or uncle',        emoji: '🫂'  },
+  { id: 'therapist', label: 'A therapist',             emoji: '🌱' },
+  { id: 'myself',    label: 'I process things alone',  emoji: '🧠' },
+  { id: 'journal2',  label: 'My journal',              emoji: '📓' },
+  { id: 'community', label: 'An online community',     emoji: '💻' }
+];
+
+const proudMomentChips = [
+  { id: 'grades',    label: 'Improved a grade',            emoji: '📈' },
+  { id: 'sport',     label: 'Achieved something in sports', emoji: '🏅' },
+  { id: 'stood_up',  label: 'Stood up for someone',        emoji: '🦁' },
+  { id: 'helped',    label: 'Helped someone in need',      emoji: '🤲' },
+  { id: 'finished',  label: 'Finished something hard',     emoji: '✅' },
+  { id: 'honest',    label: 'Was honest when it was tough', emoji: '🪞' },
+  { id: 'new',       label: 'Tried something new',         emoji: '🚀' },
+  { id: 'boundary',  label: 'Set a boundary',              emoji: '🛑' },
+  { id: 'team',      label: 'Was a good teammate',         emoji: '👥' },
+  { id: 'learned',   label: 'Learned from a mistake',      emoji: '💡' },
+  { id: 'create',    label: 'Created something',           emoji: '🎨' },
+  { id: 'apology',   label: 'Apologized and meant it',     emoji: '💙' }
+];
+
+// ========== SVG AVATAR FACE COMPONENT ==========
+
+function AvatarFace({ stress, calm, color, size = 100 }) {
+  // Compute expression: 2=joyful, 1=content, 0=neutral, -1=stressed, -2=overwhelmed
+  let level;
+  if (stress >= 9 || calm <= 2) level = -2;
+  else if (stress >= 6) level = -1;
+  else if (calm >= 7 && stress < 4) level = 2;
+  else if (calm >= 5 && stress < 6) level = 1;
+  else level = 0;
+
+  const faceStyle = { transition: 'opacity 0.35s ease' };
+  const show = (l) => ({ ...faceStyle, opacity: level === l ? 1 : 0 });
+
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" style={{ display: 'block', flexShrink: 0 }}>
+      {/* Face base */}
+      <circle cx="50" cy="50" r="47" fill={color} />
+      <circle cx="50" cy="50" r="47" fill="rgba(0,0,0,0.08)" />
+
+      {/* JOYFUL (level 2) */}
+      <g style={show(2)}>
+        <ellipse cx="35" cy="42" rx="5" ry="3" fill="white" />
+        <ellipse cx="65" cy="42" rx="5" ry="3" fill="white" />
+        <circle cx="35" cy="43" r="2" fill="#1e293b" />
+        <circle cx="65" cy="43" r="2" fill="#1e293b" />
+        <path d="M 28 34 Q 35 29 43 33" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path d="M 57 33 Q 65 29 72 34" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path d="M 28 62 Q 50 80 72 62" stroke="white" strokeWidth="3" strokeLinecap="round" fill="none" />
+        <circle cx="27" cy="55" r="7" fill="rgba(255,150,150,0.25)" />
+        <circle cx="73" cy="55" r="7" fill="rgba(255,150,150,0.25)" />
+      </g>
+
+      {/* CONTENT (level 1) */}
+      <g style={show(1)}>
+        <ellipse cx="35" cy="43" rx="5" ry="5" fill="white" />
+        <ellipse cx="65" cy="43" rx="5" ry="5" fill="white" />
+        <circle cx="35" cy="44" r="2.5" fill="#1e293b" />
+        <circle cx="65" cy="44" r="2.5" fill="#1e293b" />
+        <path d="M 29 35 Q 35 31 42 34" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path d="M 58 34 Q 65 31 71 35" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path d="M 32 64 Q 50 74 68 64" stroke="white" strokeWidth="3" strokeLinecap="round" fill="none" />
+      </g>
+
+      {/* NEUTRAL (level 0) */}
+      <g style={show(0)}>
+        <ellipse cx="35" cy="44" rx="5" ry="6" fill="white" />
+        <ellipse cx="65" cy="44" rx="5" ry="6" fill="white" />
+        <circle cx="35" cy="45" r="2.5" fill="#1e293b" />
+        <circle cx="65" cy="45" r="2.5" fill="#1e293b" />
+        <path d="M 29 36 L 42 36" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path d="M 58 36 L 71 36" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path d="M 34 65 L 66 65" stroke="white" strokeWidth="3" strokeLinecap="round" fill="none" />
+      </g>
+
+      {/* STRESSED (level -1) */}
+      <g style={show(-1)}>
+        <ellipse cx="35" cy="44" rx="5" ry="5.5" fill="white" />
+        <ellipse cx="65" cy="44" rx="5" ry="5.5" fill="white" />
+        <circle cx="35" cy="45" r="2.5" fill="#1e293b" />
+        <circle cx="65" cy="45" r="2.5" fill="#1e293b" />
+        <path d="M 29 34 Q 35 38 42 35" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path d="M 58 35 Q 65 38 71 34" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path d="M 33 67 Q 50 62 67 67" stroke="white" strokeWidth="3" strokeLinecap="round" fill="none" />
+      </g>
+
+      {/* OVERWHELMED (level -2) */}
+      <g style={show(-2)}>
+        <ellipse cx="35" cy="43" rx="6" ry="6.5" fill="white" />
+        <ellipse cx="65" cy="43" rx="6" ry="6.5" fill="white" />
+        <circle cx="35" cy="44" r="3" fill="#1e293b" />
+        <circle cx="65" cy="44" r="3" fill="#1e293b" />
+        <path d="M 27 31 Q 35 38 44 32" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path d="M 56 32 Q 65 38 73 31" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path d="M 30 70 Q 50 58 70 70" stroke="white" strokeWidth="3" strokeLinecap="round" fill="none" />
+        {/* Sweat drop */}
+        <ellipse cx="76" cy="30" rx="3" ry="4" fill="rgba(100,200,255,0.7)" />
+        <path d="M 76 26 Q 79 28 76 34 Q 73 28 76 26" fill="rgba(100,200,255,0.7)" />
+      </g>
+    </svg>
+  );
+}
+
 // ========== CHARACTER STRENGTHS DATA ==========
 
 const characterStrengths = [
@@ -614,6 +748,38 @@ const getCarryForwardMessages = (scenario, flags) => {
     msgs.push({ text: "It's been a tough day. Keep going — you've got this!", icon: '💙', type: 'encourage' });
   }
 
+  // HS-specific narrative carries
+  if (flags.includes('game_day_bail') && scenario.timeOrder >= 5) {
+    msgs.push({ text: "Missing the playoff this morning is still weighing on you.", icon: '😓', type: 'warning' });
+  }
+  if (flags.includes('game_day_courage') && scenario.timeOrder >= 5) {
+    msgs.push({ text: "You showed up when it mattered this morning. That energy is still with you.", icon: '🏆', type: 'boost' });
+  }
+  if (flags.includes('destiny_got_help') && scenario.timeOrder >= 10) {
+    msgs.push({ text: "Destiny got real help because of you. That was the most important choice today.", icon: '💛', type: 'boost' });
+  }
+  if (flags.includes('destiny_secret_kept') && scenario.timeOrder >= 10) {
+    msgs.push({ text: "You're carrying something heavy — Destiny needs more support than you alone can give.", icon: '😟', type: 'warning' });
+  }
+  if (flags.includes('coach_ultimatum_resolved') && scenario.timeOrder >= 8) {
+    msgs.push({ text: "Your grade is moving in the right direction. Coach Reyes sees the effort.", icon: '📈', type: 'boost' });
+  }
+  if (flags.includes('test_cheated') && scenario.timeOrder >= 11) {
+    msgs.push({ text: "Something from that test is sitting with you quietly...", icon: '⚠️', type: 'warning' });
+  }
+  if (flags.includes('test_integrity') && scenario.timeOrder >= 11) {
+    msgs.push({ text: "You earned that grade honestly. That counts for something real.", icon: '✅', type: 'boost' });
+  }
+  if (flags.includes('okafor_connected') && scenario.timeOrder >= 13) {
+    msgs.push({ text: "You have a meeting with Dr. Okafor. You chose not to be alone in this.", icon: '💬', type: 'boost' });
+  }
+  if (flags.includes('marcus_ally') && scenario.id === 'h12') {
+    msgs.push({ text: "Marcus has been decent to you lately. This invite might be genuine.", icon: '🤔', type: 'encourage' });
+  }
+  if (flags.includes('jordan_supported') && scenario.timeOrder >= 12) {
+    msgs.push({ text: "Jordan is getting help because you noticed. That's the kind of person you are.", icon: '💚', type: 'boost' });
+  }
+
   return msgs;
 };
 
@@ -641,6 +807,35 @@ const buildNewFlags = (choice, scenario, currentFlags) => {
   if (socialKeywords.some(kw => choice.skill?.includes(kw.split(' ')[0]))) {
     if (isGood && !newFlags.includes('social_win')) newFlags.push('social_win');
     if (isBad && !newFlags.includes('social_struggle')) newFlags.push('social_struggle');
+  }
+
+  // HS-specific narrative flags
+  if (scenario.id === 'h1') {
+    if (isGood && !newFlags.includes('game_day_courage')) newFlags.push('game_day_courage');
+    if (choice.points === -2 && !newFlags.includes('game_day_bail')) newFlags.push('game_day_bail');
+  }
+  if (scenario.id === 'h6') {
+    if (choice.points >= 1 && !newFlags.includes('destiny_got_help')) newFlags.push('destiny_got_help');
+    if (choice.points <= -1 && !newFlags.includes('destiny_secret_kept')) newFlags.push('destiny_secret_kept');
+  }
+  if (scenario.id === 'h3') {
+    if (isGood && !newFlags.includes('coach_ultimatum_resolved')) newFlags.push('coach_ultimatum_resolved');
+    if (isBad && !newFlags.includes('coach_ultimatum_failed')) newFlags.push('coach_ultimatum_failed');
+  }
+  if (scenario.id === 'h4') {
+    if (isGood && !newFlags.includes('marcus_ally')) newFlags.push('marcus_ally');
+    if (isBad && !newFlags.includes('marcus_tension')) newFlags.push('marcus_tension');
+  }
+  if (scenario.id === 'h9') {
+    if (isGood && !newFlags.includes('okafor_connected')) newFlags.push('okafor_connected');
+    if (isBad && !newFlags.includes('okafor_avoided')) newFlags.push('okafor_avoided');
+  }
+  if (scenario.id === 'h10') {
+    if (isGood && !newFlags.includes('test_integrity')) newFlags.push('test_integrity');
+    if (isBad && !newFlags.includes('test_cheated')) newFlags.push('test_cheated');
+  }
+  if (scenario.id === 'h11') {
+    if (isGood && !newFlags.includes('jordan_supported')) newFlags.push('jordan_supported');
   }
 
   return newFlags;
@@ -685,7 +880,8 @@ export default function SELAdventure() {
     { id: 'high', name: 'High School', grades: '9-12', emoji: '🎓', color: '#8b5cf6', data: highSchoolScenarios }
   ];
 
-  const colors = ['#6366f1', '#10b981', '#f43f5e', '#f59e0b', '#06b6d4', '#8b5cf6', '#ec4899', '#14b8a6'];
+  // Skin tones first, then fun colors
+  const colors = ['#FDDBB4', '#F0C27F', '#C68642', '#8D5524', '#4A2912', '#6366f1', '#10b981', '#f43f5e'];
 
   useEffect(() => {
     if (gameState === 'playing' && scenarios[currentIndex]) {
@@ -885,7 +1081,8 @@ export default function SELAdventure() {
   };
 
   const isCrisisChoice = (choice) => choice && choice.points === -2 &&
-    ['Catastrophic Thinking', 'Alarming Deflection'].includes(choice.skill);
+    ['Catastrophic Thinking', 'Alarming Deflection', 'Catastrophic Hopelessness',
+     'Fear-Based Paralysis', 'Coerced Compliance'].includes(choice.skill);
 
   const downloadJournal = () => {
     const lines = [
@@ -1023,6 +1220,11 @@ export default function SELAdventure() {
     .thought-emoji { font-size: 1.3rem; margin-right: 8px; }
     .backstory-input { width: 100%; padding: 12px 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 0.95rem; font-family: inherit; margin-bottom: 16px; resize: vertical; min-height: 60px; }
     .backstory-input:focus { outline: none; border-color: #6366f1; }
+    /* ===== CHIP UI ===== */
+    .chip-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    .chip { padding: 8px 14px; border: 2px solid #e2e8f0; border-radius: 20px; background: white; cursor: pointer; font-size: 0.82rem; font-family: inherit; display: flex; align-items: center; gap: 6px; transition: all 0.15s; color: #334155; font-weight: 600; }
+    .chip:hover { border-color: #6366f1; background: #eef2ff; transform: translateY(-1px); }
+    .chip.selected { border-color: #6366f1; background: #eef2ff; color: #4338ca; box-shadow: 0 0 0 2px rgba(99,102,241,0.2); }
     .strength-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
     .strength-btn { padding: 14px; border: 3px solid #e2e8f0; border-radius: 12px; background: white; cursor: pointer; transition: all 0.2s; font-family: inherit; text-align: left; }
     .strength-btn:hover { border-color: #6366f1; transform: translateY(-2px); }
@@ -1142,7 +1344,7 @@ export default function SELAdventure() {
             maxLength={20}
           />
           
-          <span className="label">Choose Your Color</span>
+          <span className="label">Choose Your Avatar Color</span>
           <div className="color-grid">
             {colors.map(c => (
               <button
@@ -1203,48 +1405,55 @@ export default function SELAdventure() {
 
   // BACKSTORY SCREEN
   if (gameState === 'backstory') {
+    const ChipGroup = ({ chips, value, onChange }) => (
+      <div className="chip-group">
+        {chips.map(chip => (
+          <button
+            key={chip.id}
+            className={`chip ${value === chip.label ? 'selected' : ''}`}
+            onClick={() => onChange(value === chip.label ? '' : chip.label)}
+          >
+            <span>{chip.emoji}</span>
+            <span>{chip.label}</span>
+          </button>
+        ))}
+      </div>
+    );
+
     return (
       <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)', fontFamily: "'Nunito', sans-serif", padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <style>{styles}</style>
-        <div className="card">
-          <h1 className="title">Get to Know Yourself</h1>
-          <p className="subtitle">These questions help us understand your character better</p>
+        <div className="card" style={{ maxWidth: 640 }}>
+          <h1 className="title">Build Your Character</h1>
+          <p className="subtitle">Tell us a little about yourself — tap to select</p>
 
           <div className="character-visual">
-            <div className="character-face" style={{ background: avatarColor }}>
-              <span style={{ fontSize: '3.5rem' }}>😊</span>
-            </div>
+            <AvatarFace stress={2} calm={6} color={avatarColor} size={110} />
           </div>
 
-          <div className="backstory-question">What makes you feel calm and peaceful?</div>
-          <textarea
-            className="backstory-input"
-            placeholder="e.g., Reading a book, listening to music, spending time outside..."
+          <div className="backstory-question">🧘 What helps you feel calm?</div>
+          <ChipGroup
+            chips={calmActivityChips}
             value={backstoryAnswers.calmActivity}
-            onChange={(e) => setBackstoryAnswers(prev => ({ ...prev, calmActivity: e.target.value }))}
-            maxLength={150}
+            onChange={(v) => setBackstoryAnswers(prev => ({ ...prev, calmActivity: v }))}
           />
 
-          <div className="backstory-question">Who do you talk to when you're stressed or need help?</div>
-          <textarea
-            className="backstory-input"
-            placeholder="e.g., My mom, my best friend, my teacher..."
+          <div className="backstory-question">💬 Who do you go to when things get hard?</div>
+          <ChipGroup
+            chips={supportPersonChips}
             value={backstoryAnswers.supportPerson}
-            onChange={(e) => setBackstoryAnswers(prev => ({ ...prev, supportPerson: e.target.value }))}
-            maxLength={150}
+            onChange={(v) => setBackstoryAnswers(prev => ({ ...prev, supportPerson: v }))}
           />
 
-          <div className="backstory-question">What's something you did recently that made you proud?</div>
-          <textarea
-            className="backstory-input"
-            placeholder="e.g., Helped a friend, finished a hard project, learned something new..."
+          <div className="backstory-question">🌟 Something you're proud of recently:</div>
+          <ChipGroup
+            chips={proudMomentChips}
             value={backstoryAnswers.proudMoment}
-            onChange={(e) => setBackstoryAnswers(prev => ({ ...prev, proudMoment: e.target.value }))}
-            maxLength={150}
+            onChange={(v) => setBackstoryAnswers(prev => ({ ...prev, proudMoment: v }))}
           />
 
-          <span className="label">Choose Your Character Strength</span>
-          <p className="subtitle" style={{ fontSize: '0.85rem', marginTop: -16, marginBottom: 16 }}>This strength will give you hints during tough situations</p>
+          <span className="label" style={{ marginTop: 8 }}>Your Character Strength</span>
+          <p style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: 14, marginTop: -6 }}>This will give you hints during tough moments</p>
 
           <div className="strength-grid">
             {characterStrengths.map(strength => (
@@ -1397,7 +1606,9 @@ export default function SELAdventure() {
         <div style={{ maxWidth: 700, margin: '0 auto' }}>
           <div className="header">
             <div style={{ display: 'flex', alignItems: 'center' }}>
-              <div className="avatar" style={{ background: avatarColor }}>{playerName.charAt(0).toUpperCase()}</div>
+              <div className="avatar" style={{ background: 'transparent', overflow: 'visible' }}>
+                <AvatarFace stress={stress} calm={calm} color={avatarColor} size={42} />
+              </div>
               <span className="player-name">{playerName}</span>
             </div>
             <div style={{ textAlign: 'right' }}>
@@ -1448,9 +1659,7 @@ export default function SELAdventure() {
 
           <div style={{ background: 'white', borderRadius: '20px', padding: '20px', marginBottom: '14px' }}>
             <div className="character-visual">
-              <div className="character-face" style={{ background: avatarColor }}>
-                <span>{getCharacterExpression().mouth}</span>
-              </div>
+              <AvatarFace stress={stress} calm={calm} color={avatarColor} size={120} />
             </div>
             <div className="thought-bubble">
               <div className="thought-text">
