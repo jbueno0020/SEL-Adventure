@@ -591,83 +591,320 @@ const proudMomentChips = [
 
 // ========== SVG AVATAR FACE COMPONENT ==========
 
-function AvatarFace({ stress, calm, color, size = 100 }) {
-  // Compute expression: 2=joyful, 1=content, 0=neutral, -1=stressed, -2=overwhelmed
+const ACC_OPTS = {
+  hair: [
+    { id: 'none',  label: 'Bald',   icon: '🪮' },
+    { id: 'short', label: 'Short',  icon: '✂️' },
+    { id: 'curly', label: 'Curly',  icon: '🌀' },
+    { id: 'long',  label: 'Long',   icon: '💇' },
+    { id: 'bun',   label: 'Bun',    icon: '🪡' },
+    { id: 'bangs', label: 'Bangs',  icon: '〰️' }
+  ],
+  hat: [
+    { id: 'none',        label: 'None',     icon: '—' },
+    { id: 'beanie',      label: 'Beanie',   icon: '🧢' },
+    { id: 'cap',         label: 'Cap',      icon: '🧢' },
+    { id: 'crown',       label: 'Crown',    icon: '👑' },
+    { id: 'mortarboard', label: 'Grad Cap', icon: '🎓' }
+  ],
+  glasses: [
+    { id: 'none',   label: 'None',   icon: '—' },
+    { id: 'round',  label: 'Round',  icon: '🔵' },
+    { id: 'shades', label: 'Shades', icon: '😎' },
+    { id: 'heart',  label: 'Heart',  icon: '💗' },
+    { id: 'star',   label: 'Star',   icon: '⭐' }
+  ],
+  extra: [
+    { id: 'none',      label: 'None',      icon: '—' },
+    { id: 'scarf',     label: 'Scarf',     icon: '🧣' },
+    { id: 'bow',       label: 'Bow Tie',   icon: '🎀' },
+    { id: 'headband',  label: 'Headband',  icon: '🌸' },
+    { id: 'earrings',  label: 'Earrings',  icon: '💛' }
+  ]
+};
+
+function AvatarFace({ stress = 2, calm = 5, accessories = {}, size = 100 }) {
+  const YELLOW = '#FBBF24';
+  const OUTLINE = '#92400e';
+
   let level;
   if (stress >= 9 || calm <= 2) level = -2;
-  else if (stress >= 6) level = -1;
+  else if (stress >= 6)         level = -1;
   else if (calm >= 7 && stress < 4) level = 2;
   else if (calm >= 5 && stress < 6) level = 1;
   else level = 0;
 
-  const faceStyle = { transition: 'opacity 0.35s ease' };
-  const show = (l) => ({ ...faceStyle, opacity: level === l ? 1 : 0 });
+  const { hair = 'none', hat = 'none', glasses = 'none', extra = 'none' } = accessories;
+  const fade = (l) => ({ opacity: level === l ? 1 : 0, transition: 'opacity 0.4s ease' });
 
+  // Hair colors
+  const HC = { short: '#3D2B1F', curly: '#111111', long: '#5C3317', bun: '#8B4513', bangs: '#E8C84A' };
+
+  // === BACK HAIR (rendered before face) ===
+  const backHair = () => {
+    if (hat !== 'none') return null;
+    if (hair === 'long') return (
+      <g>
+        <rect x="4" y="22" width="13" height="80" rx="6" fill={HC.long} />
+        <rect x="83" y="22" width="13" height="80" rx="6" fill={HC.long} />
+      </g>
+    );
+    if (hair === 'curly') return (
+      <g>
+        <circle cx="50" cy="30" r="36" fill={HC.curly} />
+        <circle cx="11" cy="48" r="17" fill={HC.curly} />
+        <circle cx="89" cy="48" r="17" fill={HC.curly} />
+        <circle cx="22" cy="20" r="12" fill="#222" />
+        <circle cx="78" cy="20" r="12" fill="#222" />
+        <circle cx="50" cy="12" r="13" fill="#1a1a1a" />
+      </g>
+    );
+    return null;
+  };
+
+  // === FRONT HAIR (rendered after face, before hat) ===
+  const frontHair = () => {
+    if (hat !== 'none') return null;
+    if (hair === 'short') return (
+      <path d="M 10 57 Q 10 9 50 9 Q 90 9 90 57 Q 76 37 50 35 Q 24 37 10 57 Z" fill={HC.short} />
+    );
+    if (hair === 'long') return (
+      <path d="M 10 57 Q 10 9 50 9 Q 90 9 90 57 Q 76 37 50 35 Q 24 37 10 57 Z" fill={HC.long} />
+    );
+    if (hair === 'bun') return (
+      <g>
+        <path d="M 18 57 Q 18 9 50 9 Q 82 9 82 57 Q 70 37 50 35 Q 30 37 18 57 Z" fill={HC.bun} />
+        <circle cx="50" cy="3" r="13" fill={HC.bun} />
+        <circle cx="50" cy="3" r="7" fill="#A0522D" />
+        <line x1="44" y1="5" x2="56" y2="5" stroke={HC.bun} strokeWidth="2" />
+        <line x1="50" y1="0" x2="50" y2="10" stroke="#A0522D" strokeWidth="1.5" />
+      </g>
+    );
+    if (hair === 'bangs') return (
+      <g>
+        <path d="M 10 57 Q 10 9 50 9 Q 90 9 90 57 Q 76 37 50 35 Q 24 37 10 57 Z" fill={HC.bangs} />
+        <rect x="11" y="37" width="78" height="11" rx="5" fill={HC.bangs} />
+        <line x1="22" y1="42" x2="28" y2="48" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5" />
+        <line x1="48" y1="41" x2="50" y2="48" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5" />
+        <line x1="74" y1="42" x2="70" y2="48" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5" />
+      </g>
+    );
+    return null; // curly = all back
+  };
+
+  // === HATS ===
+  const hatEl = () => {
+    if (hat === 'beanie') return (
+      <g>
+        <path d="M 8 56 Q 8 4 50 4 Q 92 4 92 56 Q 78 38 50 36 Q 22 38 8 56 Z" fill="#ef4444" />
+        <rect x="8" y="47" width="84" height="13" rx="6" fill="#dc2626" />
+        <line x1="28" y1="48" x2="26" y2="60" stroke="#b91c1c" strokeWidth="1.5" />
+        <line x1="50" y1="48" x2="50" y2="60" stroke="#b91c1c" strokeWidth="1.5" />
+        <line x1="72" y1="48" x2="74" y2="60" stroke="#b91c1c" strokeWidth="1.5" />
+        <circle cx="50" cy="7" r="10" fill="white" />
+        <circle cx="46" cy="4" r="3.5" fill="#f3f4f6" />
+      </g>
+    );
+    if (hat === 'cap') return (
+      <g>
+        <path d="M 14 57 Q 14 12 50 12 Q 86 12 86 57 Q 74 39 50 37 Q 26 39 14 57 Z" fill="#1e40af" />
+        <path d="M 2 57 Q 50 70 98 57 Q 95 49 50 49 Q 5 49 2 57 Z" fill="#1e3a8a" />
+        <rect x="14" y="50" width="72" height="9" fill="#1d4ed8" />
+        <circle cx="50" cy="13" r="3.5" fill="#93c5fd" />
+      </g>
+    );
+    if (hat === 'crown') return (
+      <g>
+        <rect x="16" y="22" width="68" height="28" rx="3" fill="#F59E0B" />
+        <polygon points="16,22 24,3 33,22" fill="#F59E0B" />
+        <polygon points="41,22 50,1 59,22" fill="#F59E0B" />
+        <polygon points="67,22 76,3 84,22" fill="#F59E0B" />
+        <circle cx="50" cy="32" r="5" fill="#ef4444" />
+        <circle cx="26" cy="33" r="4" fill="#3b82f6" />
+        <circle cx="74" cy="33" r="4" fill="#10b981" />
+        <rect x="16" y="46" width="68" height="6" rx="2" fill="#D97706" />
+        <rect x="16" y="22" width="68" height="4" rx="1" fill="rgba(255,255,255,0.25)" />
+      </g>
+    );
+    if (hat === 'mortarboard') return (
+      <g>
+        <path d="M 18 53 Q 18 9 50 9 Q 82 9 82 53 Q 70 37 50 35 Q 30 37 18 53 Z" fill="#1e293b" />
+        <ellipse cx="50" cy="19" rx="43" ry="9" fill="#1e293b" />
+        <ellipse cx="50" cy="17" rx="42" ry="7.5" fill="#0f172a" />
+        <line x1="82" y1="17" x2="93" y2="44" stroke="#F59E0B" strokeWidth="2.5" />
+        <circle cx="93" cy="46" r="4" fill="#F59E0B" />
+        <line x1="91" y1="46" x2="88" y2="57" stroke="#D97706" strokeWidth="1.5" />
+        <line x1="93" y1="46" x2="93" y2="58" stroke="#D97706" strokeWidth="1.5" />
+        <line x1="95" y1="46" x2="97" y2="56" stroke="#D97706" strokeWidth="1.5" />
+      </g>
+    );
+    return null;
+  };
+
+  // === GLASSES ===
+  const glassesEl = () => {
+    if (glasses === 'round') return (
+      <g>
+        <circle cx="33" cy="53" r="11" fill="none" stroke="#7C3AED" strokeWidth="3" />
+        <circle cx="67" cy="53" r="11" fill="none" stroke="#7C3AED" strokeWidth="3" />
+        <line x1="44" y1="53" x2="56" y2="53" stroke="#7C3AED" strokeWidth="2.5" />
+        <line x1="4" y1="51" x2="22" y2="53" stroke="#7C3AED" strokeWidth="2" />
+        <line x1="96" y1="51" x2="78" y2="53" stroke="#7C3AED" strokeWidth="2" />
+      </g>
+    );
+    if (glasses === 'shades') return (
+      <g>
+        <rect x="13" y="44" width="30" height="18" rx="7" fill="#1e293b" />
+        <rect x="57" y="44" width="30" height="18" rx="7" fill="#1e293b" />
+        <line x1="43" y1="53" x2="57" y2="53" stroke="#1e293b" strokeWidth="3" />
+        <line x1="4" y1="51" x2="13" y2="53" stroke="#334155" strokeWidth="2.5" />
+        <line x1="96" y1="51" x2="87" y2="53" stroke="#334155" strokeWidth="2.5" />
+        <line x1="17" y1="47" x2="21" y2="57" stroke="rgba(255,255,255,0.18)" strokeWidth="5" strokeLinecap="round" />
+        <line x1="61" y1="47" x2="65" y2="57" stroke="rgba(255,255,255,0.18)" strokeWidth="5" strokeLinecap="round" />
+      </g>
+    );
+    if (glasses === 'heart') return (
+      <g>
+        <path d="M 22 53 C 22 45 28 41 33 45 C 38 41 44 45 44 53 C 44 60 33 67 33 67 C 33 67 22 60 22 53 Z" fill="#ec4899" />
+        <path d="M 56 53 C 56 45 62 41 67 45 C 72 41 78 45 78 53 C 78 60 67 67 67 67 C 67 67 56 60 56 53 Z" fill="#ec4899" />
+        <line x1="44" y1="52" x2="56" y2="52" stroke="#db2777" strokeWidth="2.5" />
+        <line x1="4" y1="51" x2="22" y2="53" stroke="#db2777" strokeWidth="2" />
+        <line x1="96" y1="51" x2="78" y2="53" stroke="#db2777" strokeWidth="2" />
+      </g>
+    );
+    if (glasses === 'star') return (
+      <g>
+        <polygon points="33,41 36,49 44,49 38,54 40,63 33,58 26,63 28,54 22,49 30,49" fill="#F59E0B" />
+        <polygon points="67,41 70,49 78,49 72,54 74,63 67,58 60,63 62,54 56,49 64,49" fill="#F59E0B" />
+        <line x1="44" y1="52" x2="56" y2="52" stroke="#D97706" strokeWidth="2" />
+        <line x1="4" y1="51" x2="22" y2="52" stroke="#D97706" strokeWidth="2" />
+        <line x1="96" y1="51" x2="78" y2="52" stroke="#D97706" strokeWidth="2" />
+      </g>
+    );
+    return null;
+  };
+
+  // === EXTRAS (front-layer accessories) ===
+  const extraFront = () => {
+    if (extra === 'scarf') return (
+      <g>
+        <rect x="12" y="89" width="76" height="16" rx="8" fill="#ef4444" />
+        <rect x="12" y="94" width="76" height="3" rx="1" fill="white" />
+        <rect x="12" y="99" width="76" height="3" rx="1" fill="white" />
+        <rect x="54" y="93" width="12" height="22" rx="6" fill="#ef4444" />
+        <line x1="56" y1="99" x2="64" y2="99" stroke="white" strokeWidth="2" />
+        <line x1="56" y1="104" x2="64" y2="104" stroke="white" strokeWidth="2" />
+      </g>
+    );
+    if (extra === 'bow') return (
+      <g>
+        <path d="M 22 85 L 50 91 L 22 97 Z" fill="#7C3AED" />
+        <path d="M 78 85 L 50 91 L 78 97 Z" fill="#7C3AED" />
+        <circle cx="50" cy="91" r="6" fill="#5B21B6" />
+        <circle cx="33" cy="88" r="2" fill="#A78BFA" />
+        <circle cx="67" cy="88" r="2" fill="#A78BFA" />
+      </g>
+    );
+    if (extra === 'headband') return (
+      <g>
+        <path d="M 11 47 Q 50 35 89 47 Q 87 40 50 28 Q 13 40 11 47 Z" fill="#f472b6" />
+        <circle cx="76" cy="37" r="5" fill="#fbbf24" />
+        <circle cx="76" cy="30" r="5" fill="#fda4af" />
+        <circle cx="82" cy="34" r="5" fill="#fda4af" />
+        <circle cx="82" cy="41" r="5" fill="#fda4af" />
+        <circle cx="76" cy="44" r="5" fill="#fda4af" />
+        <circle cx="70" cy="41" r="5" fill="#fda4af" />
+        <circle cx="70" cy="34" r="5" fill="#fda4af" />
+        <circle cx="76" cy="37" r="5" fill="#fbbf24" />
+      </g>
+    );
+    if (extra === 'earrings') return (
+      <g>
+        <circle cx="9" cy="62" r="4" fill="#F59E0B" />
+        <circle cx="91" cy="62" r="4" fill="#F59E0B" />
+        <path d="M 6 66 Q 9 76 12 66" fill="none" stroke="#F59E0B" strokeWidth="2.5" />
+        <path d="M 88 66 Q 91 76 94 66" fill="none" stroke="#F59E0B" strokeWidth="2.5" />
+      </g>
+    );
+    return null;
+  };
+
+  // viewBox is 100×108 — face at cy=54, gives room for tall hair above and scarf below
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" style={{ display: 'block', flexShrink: 0 }}>
-      {/* Face base */}
-      <circle cx="50" cy="50" r="47" fill={color} />
-      <circle cx="50" cy="50" r="47" fill="rgba(0,0,0,0.08)" />
+    <svg width={size} height={Math.round(size * 1.08)} viewBox="0 0 100 108"
+      style={{ display: 'block', flexShrink: 0, overflow: 'visible' }}>
 
-      {/* JOYFUL (level 2) */}
-      <g style={show(2)}>
-        <ellipse cx="35" cy="42" rx="5" ry="3" fill="white" />
-        <ellipse cx="65" cy="42" rx="5" ry="3" fill="white" />
-        <circle cx="35" cy="43" r="2" fill="#1e293b" />
-        <circle cx="65" cy="43" r="2" fill="#1e293b" />
-        <path d="M 28 34 Q 35 29 43 33" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-        <path d="M 57 33 Q 65 29 72 34" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-        <path d="M 28 62 Q 50 80 72 62" stroke="white" strokeWidth="3" strokeLinecap="round" fill="none" />
-        <circle cx="27" cy="55" r="7" fill="rgba(255,150,150,0.25)" />
-        <circle cx="73" cy="55" r="7" fill="rgba(255,150,150,0.25)" />
+      {backHair()}
+
+      {/* FACE BASE */}
+      <circle cx="50" cy="54" r="44" fill={YELLOW} />
+      <circle cx="50" cy="54" r="44" fill="rgba(0,0,0,0.04)" />
+
+      {/* ── JOYFUL ── */}
+      <g style={fade(2)}>
+        <ellipse cx="33" cy="47" rx="5" ry="3.5" fill="white" />
+        <ellipse cx="67" cy="47" rx="5" ry="3.5" fill="white" />
+        <circle cx="33" cy="48" r="2" fill="#1e293b" /><circle cx="67" cy="48" r="2" fill="#1e293b" />
+        <path d="M 25 38 Q 33 32 41 37" stroke={OUTLINE} strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path d="M 59 37 Q 67 32 75 38" stroke={OUTLINE} strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path d="M 26 66 Q 50 85 74 66" stroke={OUTLINE} strokeWidth="4" strokeLinecap="round" fill="none" />
+        <circle cx="24" cy="59" r="8" fill="rgba(239,68,68,0.18)" />
+        <circle cx="76" cy="59" r="8" fill="rgba(239,68,68,0.18)" />
+        <line x1="87" y1="26" x2="87" y2="34" stroke="#F59E0B" strokeWidth="2.5" />
+        <line x1="83" y1="30" x2="91" y2="30" stroke="#F59E0B" strokeWidth="2.5" />
+        <circle cx="87" cy="30" r="2" fill="#FBBF24" />
       </g>
 
-      {/* CONTENT (level 1) */}
-      <g style={show(1)}>
-        <ellipse cx="35" cy="43" rx="5" ry="5" fill="white" />
-        <ellipse cx="65" cy="43" rx="5" ry="5" fill="white" />
-        <circle cx="35" cy="44" r="2.5" fill="#1e293b" />
-        <circle cx="65" cy="44" r="2.5" fill="#1e293b" />
-        <path d="M 29 35 Q 35 31 42 34" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-        <path d="M 58 34 Q 65 31 71 35" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-        <path d="M 32 64 Q 50 74 68 64" stroke="white" strokeWidth="3" strokeLinecap="round" fill="none" />
+      {/* ── CONTENT ── */}
+      <g style={fade(1)}>
+        <ellipse cx="33" cy="47" rx="5" ry="5.5" fill="white" />
+        <ellipse cx="67" cy="47" rx="5" ry="5.5" fill="white" />
+        <circle cx="33" cy="48" r="2.5" fill="#1e293b" /><circle cx="67" cy="48" r="2.5" fill="#1e293b" />
+        <path d="M 25 38 Q 33 33 41 37" stroke={OUTLINE} strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path d="M 59 37 Q 67 33 75 38" stroke={OUTLINE} strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path d="M 30 67 Q 50 79 70 67" stroke={OUTLINE} strokeWidth="3.5" strokeLinecap="round" fill="none" />
       </g>
 
-      {/* NEUTRAL (level 0) */}
-      <g style={show(0)}>
-        <ellipse cx="35" cy="44" rx="5" ry="6" fill="white" />
-        <ellipse cx="65" cy="44" rx="5" ry="6" fill="white" />
-        <circle cx="35" cy="45" r="2.5" fill="#1e293b" />
-        <circle cx="65" cy="45" r="2.5" fill="#1e293b" />
-        <path d="M 29 36 L 42 36" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-        <path d="M 58 36 L 71 36" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-        <path d="M 34 65 L 66 65" stroke="white" strokeWidth="3" strokeLinecap="round" fill="none" />
+      {/* ── NEUTRAL ── */}
+      <g style={fade(0)}>
+        <ellipse cx="33" cy="47" rx="5" ry="6" fill="white" />
+        <ellipse cx="67" cy="47" rx="5" ry="6" fill="white" />
+        <circle cx="33" cy="48" r="2.5" fill="#1e293b" /><circle cx="67" cy="48" r="2.5" fill="#1e293b" />
+        <path d="M 25 38 L 41 38" stroke={OUTLINE} strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M 59 38 L 75 38" stroke={OUTLINE} strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M 33 68 L 67 68" stroke={OUTLINE} strokeWidth="3.5" strokeLinecap="round" />
       </g>
 
-      {/* STRESSED (level -1) */}
-      <g style={show(-1)}>
-        <ellipse cx="35" cy="44" rx="5" ry="5.5" fill="white" />
-        <ellipse cx="65" cy="44" rx="5" ry="5.5" fill="white" />
-        <circle cx="35" cy="45" r="2.5" fill="#1e293b" />
-        <circle cx="65" cy="45" r="2.5" fill="#1e293b" />
-        <path d="M 29 34 Q 35 38 42 35" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-        <path d="M 58 35 Q 65 38 71 34" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-        <path d="M 33 67 Q 50 62 67 67" stroke="white" strokeWidth="3" strokeLinecap="round" fill="none" />
+      {/* ── STRESSED ── */}
+      <g style={fade(-1)}>
+        <ellipse cx="33" cy="47" rx="5" ry="5.5" fill="white" />
+        <ellipse cx="67" cy="47" rx="5" ry="5.5" fill="white" />
+        <circle cx="33" cy="48" r="2.5" fill="#1e293b" /><circle cx="67" cy="48" r="2.5" fill="#1e293b" />
+        <path d="M 24 36 Q 33 42 42 37" stroke={OUTLINE} strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path d="M 58 37 Q 67 42 76 36" stroke={OUTLINE} strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path d="M 31 71 Q 50 63 69 71" stroke={OUTLINE} strokeWidth="3.5" strokeLinecap="round" fill="none" />
       </g>
 
-      {/* OVERWHELMED (level -2) */}
-      <g style={show(-2)}>
-        <ellipse cx="35" cy="43" rx="6" ry="6.5" fill="white" />
-        <ellipse cx="65" cy="43" rx="6" ry="6.5" fill="white" />
-        <circle cx="35" cy="44" r="3" fill="#1e293b" />
-        <circle cx="65" cy="44" r="3" fill="#1e293b" />
-        <path d="M 27 31 Q 35 38 44 32" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-        <path d="M 56 32 Q 65 38 73 31" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-        <path d="M 30 70 Q 50 58 70 70" stroke="white" strokeWidth="3" strokeLinecap="round" fill="none" />
+      {/* ── OVERWHELMED ── */}
+      <g style={fade(-2)}>
+        <ellipse cx="33" cy="46" rx="6" ry="6.5" fill="white" />
+        <ellipse cx="67" cy="46" rx="6" ry="6.5" fill="white" />
+        <circle cx="33" cy="47" r="3" fill="#1e293b" /><circle cx="67" cy="47" r="3" fill="#1e293b" />
+        <path d="M 22 32 Q 33 42 45 35" stroke={OUTLINE} strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path d="M 55 35 Q 67 42 78 32" stroke={OUTLINE} strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path d="M 27 73 Q 50 60 73 73" stroke={OUTLINE} strokeWidth="4" strokeLinecap="round" fill="none" />
         {/* Sweat drop */}
-        <ellipse cx="76" cy="30" rx="3" ry="4" fill="rgba(100,200,255,0.7)" />
-        <path d="M 76 26 Q 79 28 76 34 Q 73 28 76 26" fill="rgba(100,200,255,0.7)" />
+        <circle cx="81" cy="30" r="3.5" fill="#BAE6FD" />
+        <path d="M 81 26 Q 85 28 81 37 Q 77 28 81 26 Z" fill="#BAE6FD" />
+        {/* Worry lines */}
+        <line x1="13" y1="34" x2="20" y2="43" stroke="#D97706" strokeWidth="2" strokeLinecap="round" />
+        <line x1="87" y1="34" x2="80" y2="43" stroke="#D97706" strokeWidth="2" strokeLinecap="round" />
       </g>
+
+      {frontHair()}
+      {hatEl()}
+      {glassesEl()}
+      {extraFront()}
     </svg>
   );
 }
@@ -854,7 +1091,8 @@ export default function SELAdventure() {
   const [score, setScore] = useState(0);
   const [responses, setResponses] = useState([]);
   const [playerName, setPlayerName] = useState('');
-  const [avatarColor, setAvatarColor] = useState('#6366f1');
+  const [accessories, setAccessories] = useState({ hair: 'none', hat: 'none', glasses: 'none', extra: 'none' });
+  const [accCategory, setAccCategory] = useState('hair');
   const [showReflection, setShowReflection] = useState(false);
   const [scenarioCount, setScenarioCount] = useState(7);
   const [stress, setStress] = useState(2);
@@ -880,9 +1118,6 @@ export default function SELAdventure() {
     { id: 'high', name: 'High School', grades: '9-12', emoji: '🎓', color: '#8b5cf6', data: highSchoolScenarios }
   ];
 
-  // Skin tones first, then fun colors
-  const colors = ['#FDDBB4', '#F0C27F', '#C68642', '#8D5524', '#4A2912', '#6366f1', '#10b981', '#f43f5e'];
-
   useEffect(() => {
     if (gameState === 'playing' && scenarios[currentIndex]) {
       setShuffledChoices(shuffleArray(scenarios[currentIndex].choices));
@@ -907,7 +1142,7 @@ export default function SELAdventure() {
     if (['playing', 'consequence'].includes(gameState)) {
       try {
         localStorage.setItem('sel_saved_game', JSON.stringify({
-          gameState, gradeLevel, playerName, avatarColor, scenarioCount,
+          gameState, gradeLevel, playerName, accessories, scenarioCount,
           currentIndex, scenarios, score, responses, stress, calm,
           stressHistory, dayFlags, characterStrength, backstoryAnswers,
           selectedChoice, modifiedConsequence
@@ -938,7 +1173,7 @@ export default function SELAdventure() {
       setGameState(saved.gameState);
       setGradeLevel(saved.gradeLevel);
       setPlayerName(saved.playerName || '');
-      setAvatarColor(saved.avatarColor || '#6366f1');
+      setAccessories(saved.accessories || { hair: 'none', hat: 'none', glasses: 'none', extra: 'none' });
       setScenarioCount(saved.scenarioCount || 7);
       setCurrentIndex(saved.currentIndex || 0);
       setScenarios(saved.scenarios || []);
@@ -1132,10 +1367,15 @@ export default function SELAdventure() {
     .grade-range { color: #64748b; font-size: 0.85rem; }
     .input { width: 100%; padding: 14px 16px; border: 3px solid #e2e8f0; border-radius: 12px; font-size: 1rem; font-family: inherit; margin-bottom: 16px; }
     .input:focus { outline: none; border-color: #6366f1; }
-    .color-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; margin-bottom: 16px; }
-    .color-btn { aspect-ratio: 1; border-radius: 10px; border: 3px solid transparent; cursor: pointer; transition: all 0.2s; }
-    .color-btn:hover { transform: scale(1.15); }
-    .color-btn.selected { border-color: #1e293b; }
+    .acc-preview { display: flex; justify-content: center; margin-bottom: 14px; }
+    .acc-tabs { display: flex; gap: 6px; justify-content: center; margin-bottom: 10px; }
+    .acc-tab { padding: 8px 16px; border: 2px solid #e2e8f0; background: white; border-radius: 20px; font-weight: 700; font-size: 0.85rem; cursor: pointer; font-family: inherit; color: #64748b; transition: all 0.2s; }
+    .acc-tab:hover { border-color: #6366f1; color: #6366f1; }
+    .acc-tab.active { background: #6366f1; color: white; border-color: #6366f1; }
+    .acc-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+    .acc-opt { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; border: 2px solid #e2e8f0; background: white; border-radius: 12px; font-size: 0.8rem; font-weight: 700; color: #475569; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+    .acc-opt:hover { border-color: #6366f1; color: #6366f1; transform: translateY(-2px); }
+    .acc-opt.selected { background: #ede9fe; border-color: #6366f1; color: #4f46e5; }
     .count-btns { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; }
     .count-btn { padding: 10px 20px; border: 3px solid #e2e8f0; background: white; border-radius: 10px; font-weight: 700; cursor: pointer; font-family: inherit; }
     .count-btn:hover { border-color: #6366f1; }
@@ -1344,15 +1584,29 @@ export default function SELAdventure() {
             maxLength={20}
           />
           
-          <span className="label">Choose Your Avatar Color</span>
-          <div className="color-grid">
-            {colors.map(c => (
+          <span className="label">Customize Your Avatar</span>
+          <div className="acc-preview">
+            <AvatarFace stress={2} calm={6} accessories={accessories} size={130} />
+          </div>
+          <div className="acc-tabs">
+            {[['hair','Hair'],['hat','Hat'],['glasses','Glasses'],['extra','Extras']].map(([cat, label]) => (
               <button
-                key={c}
-                className={`color-btn ${avatarColor === c ? 'selected' : ''}`}
-                style={{ background: c }}
-                onClick={() => setAvatarColor(c)}
-              />
+                key={cat}
+                className={`acc-tab ${accCategory === cat ? 'active' : ''}`}
+                onClick={() => setAccCategory(cat)}
+              >{label}</button>
+            ))}
+          </div>
+          <div className="acc-options">
+            {ACC_OPTS[accCategory].map(opt => (
+              <button
+                key={opt.id}
+                className={`acc-opt ${accessories[accCategory] === opt.id ? 'selected' : ''}`}
+                onClick={() => setAccessories(prev => ({ ...prev, [accCategory]: opt.id }))}
+              >
+                <span style={{ fontSize: '1.4rem' }}>{opt.icon}</span>
+                <span>{opt.label}</span>
+              </button>
             ))}
           </div>
           
@@ -1428,7 +1682,7 @@ export default function SELAdventure() {
           <p className="subtitle">Tell us a little about yourself — tap to select</p>
 
           <div className="character-visual">
-            <AvatarFace stress={2} calm={6} color={avatarColor} size={110} />
+            <AvatarFace stress={2} calm={6} accessories={accessories} size={110} />
           </div>
 
           <div className="backstory-question">🧘 What helps you feel calm?</div>
@@ -1607,7 +1861,7 @@ export default function SELAdventure() {
           <div className="header">
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <div className="avatar" style={{ background: 'transparent', overflow: 'visible' }}>
-                <AvatarFace stress={stress} calm={calm} color={avatarColor} size={42} />
+                <AvatarFace stress={stress} calm={calm} accessories={accessories} size={42} />
               </div>
               <span className="player-name">{playerName}</span>
             </div>
@@ -1659,7 +1913,7 @@ export default function SELAdventure() {
 
           <div style={{ background: 'white', borderRadius: '20px', padding: '20px', marginBottom: '14px' }}>
             <div className="character-visual">
-              <AvatarFace stress={stress} calm={calm} color={avatarColor} size={120} />
+              <AvatarFace stress={stress} calm={calm} accessories={accessories} size={120} />
             </div>
             <div className="thought-bubble">
               <div className="thought-text">
